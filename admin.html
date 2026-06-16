@@ -1,6 +1,3 @@
-では`admin.html`の全体コードをそのまま出します！
-
-```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -61,7 +58,7 @@
   .stat-value{font-size:26px;font-weight:700;letter-spacing:-0.02em;}
 
   .table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
-  table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:400px;}
   th{text-align:left;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap;}
   td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
   tr:last-child td{border-bottom:none;}
@@ -136,6 +133,15 @@
   .tt-warn-label{font-size:11px;font-weight:600;color:var(--danger);background:var(--danger-bg);padding:2px 8px;border-radius:99px;white-space:nowrap;}
   .tt-drag-handle{color:var(--text-hint);font-size:18px;cursor:grab;padding:0 4px;}
   .tt-empty{text-align:center;padding:48px 0;color:var(--text-hint);font-size:14px;}
+
+  /* メンバー一覧 */
+  .member-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+  @media(max-width:480px){.member-stats{grid-template-columns:repeat(2,1fr);}}
+  .band-pills{display:flex;flex-wrap:wrap;gap:4px;}
+  .band-pill{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--accent-bg);color:var(--accent);border:1px solid #c5d4f8;}
+  .band-pill.selected{background:var(--success-bg);color:var(--success);border-color:#a8dfc0;}
+  .year-group{margin-bottom:24px;}
+  .year-heading{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-hint);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
 </style>
 </head>
 <body>
@@ -159,13 +165,14 @@
 
   <div class="admin-header">
     <h2>運営ダッシュボード</h2>
-    <p>申し込みの確認・抽選・タイムテーブル・フォーム設定・データ出力ができます。</p>
+    <p>申し込みの確認・抽選・タイムテーブル・メンバー一覧・フォーム設定・データ出力ができます。</p>
   </div>
 
   <div class="tabs">
     <button class="tab active" onclick="showSubtab('answers',this)">回答一覧</button>
     <button class="tab" onclick="showSubtab('lottery',this)">抽選</button>
     <button class="tab" onclick="showSubtab('timetable',this)">タイムテーブル</button>
+    <button class="tab" onclick="showSubtab('members',this)">メンバー一覧</button>
     <button class="tab" onclick="showSubtab('settings',this)">フォーム設定</button>
     <button class="tab" onclick="showSubtab('export',this)">データ出力</button>
   </div>
@@ -227,6 +234,23 @@
     <div id="tt-body"></div>
   </div>
 
+  <!-- メンバー一覧 -->
+  <div class="subtab" id="subtab-members">
+    <div class="member-stats" id="member-stats-row">
+      <div class="stat"><div class="stat-label">ユニーク人数</div><div class="stat-value" style="color:var(--accent)" id="ms-unique">0</div></div>
+      <div class="stat"><div class="stat-label">複数バンド出演</div><div class="stat-value" style="color:var(--warning)" id="ms-multi">0</div></div>
+      <div class="stat"><div class="stat-label">対象バンド数</div><div class="stat-value" id="ms-bands">0</div></div>
+    </div>
+    <div class="ctrl-row">
+      <select id="member-filter" onchange="renderMembers()">
+        <option value="all">全申し込みから集計</option>
+        <option value="selected">当選バンドのみ</option>
+      </select>
+      <input type="text" id="member-search" placeholder="名前で検索…" oninput="renderMembers()" />
+    </div>
+    <div id="members-body"></div>
+  </div>
+
   <!-- フォーム設定 -->
   <div class="subtab" id="subtab-settings">
     <div class="settings-grid">
@@ -281,6 +305,7 @@
         <button class="btn success-btn" onclick="exportCSV('selected')">当選者のみCSVで保存</button>
         <button class="btn" style="color:var(--warning);border-color:#e8d79a;" onclick="exportCSV('ranked')">順位順でCSVで保存</button>
         <button class="btn" style="color:var(--accent);border-color:var(--accent);" onclick="exportTimetableCSV()">タイムテーブルをCSVで保存</button>
+        <button class="btn" onclick="exportMembersCSV()">メンバー一覧をCSVで保存</button>
       </div>
     </div>
     <div class="export-section">
@@ -302,7 +327,6 @@ let bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
 function saveData(){try{localStorage.setItem('acappella_v2_bands',JSON.stringify(bands));}catch(e){}}
 function saveConfig(){try{localStorage.setItem('acappella_v2_config',JSON.stringify(config));}catch(e){}}
 
-// パスワード
 function checkPw(){
   if(document.getElementById('pw-input').value===config.password){
     document.getElementById('pw-overlay').style.display='none';
@@ -313,7 +337,6 @@ function checkPw(){
   }
 }
 
-// サブタブ
 function showSubtab(name,btn){
   document.querySelectorAll('.subtab').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
@@ -322,6 +345,7 @@ function showSubtab(name,btn){
   if(name==='answers')renderAnswers();
   if(name==='lottery')renderLotteryResult();
   if(name==='timetable')initTimetable();
+  if(name==='members')renderMembers();
   if(name==='settings')renderSettingsPanel();
 }
 
@@ -377,25 +401,18 @@ function runLottery(){
   if(!bands.length){alert('申し込みデータがありません。');return;}
   if(bands.some(b=>b.rank)&&!confirm('現在の順位をリセットして再抽選しますか？'))return;
   const shuffled=[...bands].sort(()=>Math.random()-.5);
-  shuffled.forEach((b,i)=>{
-    const target=bands.find(x=>x.id===b.id);
-    if(target){target.rank=i+1;target.status='pending';}
-  });
+  shuffled.forEach((b,i)=>{const target=bands.find(x=>x.id===b.id);if(target){target.rank=i+1;target.status='pending';}});
   saveData();renderLotteryResult();
 }
-
 function resetLottery(){
   if(!confirm('順位と当落をすべてリセットしますか？'))return;
   bands.forEach(b=>{delete b.rank;b.status='pending';});
   saveData();renderLotteryResult();
 }
-
 function setStatus(id,status){
   const b=bands.find(x=>x.id===id);if(!b)return;
-  b.status=status;
-  saveData();renderLotteryResult();
+  b.status=status;saveData();renderLotteryResult();
 }
-
 function renderLotteryResult(){
   const sumBox=document.getElementById('lottery-summary-box');
   const result=document.getElementById('lottery-result');
@@ -442,12 +459,10 @@ function initTimetable(){
   selectedIds.forEach(id=>{if(!ttOrder.includes(id))ttOrder.push(id);});
   renderTimetable();
 }
-
 function resetTimetable(){
   ttOrder=bands.filter(b=>b.status==='selected').map(b=>b.id);
   renderTimetable();
 }
-
 function autoArrange(){
   const selected=bands.filter(b=>b.status==='selected');
   if(!selected.length)return;
@@ -468,7 +483,6 @@ function autoArrange(){
   ttOrder=arranged.map(b=>b.id);
   renderTimetable();
 }
-
 function getConflicts(order){
   const conflicts=new Set();
   for(let i=0;i<order.length-1;i++){
@@ -479,7 +493,6 @@ function getConflicts(order){
   }
   return conflicts;
 }
-
 function getConflictDetails(order){
   const details=[];
   for(let i=0;i<order.length-1;i++){
@@ -487,38 +500,26 @@ function getConflictDetails(order){
     const b=bands.find(b=>b.id===order[i+1]);
     if(!a||!b)continue;
     const overlap=a.members.filter(m=>b.members.includes(m));
-    if(overlap.length)details.push(`${i+1}番目「${a.band}」と${i+2}番目「${b.band}」に共通メンバーがいます（${overlap.join('、')}）`);
+    if(overlap.length)details.push(`${i+1}番目「${a.band}」と${i+2}番目「${b.band}」（${overlap.join('、')}）`);
   }
   return details;
 }
-
 function renderTimetable(){
   const selected=bands.filter(b=>b.status==='selected');
   const body=document.getElementById('tt-body');
   const warnBox=document.getElementById('tt-warning-box');
-  if(!selected.length){
-    body.innerHTML='<p class="tt-empty">当選バンドがまだいません。抽選タブで当選を設定してください。</p>';
-    warnBox.style.display='none';
-    return;
-  }
+  if(!selected.length){body.innerHTML='<p class="tt-empty">当選バンドがまだいません。抽選タブで当選を設定してください。</p>';warnBox.style.display='none';return;}
   const conflicts=getConflicts(ttOrder);
   const details=getConflictDetails(ttOrder);
-  if(details.length){
-    warnBox.style.display='block';
-    warnBox.innerHTML=`<strong>⚠ メンバー被りの警告 ${details.length}件</strong><br>${details.map(d=>'・'+d).join('<br>')}`;
-  }else{
-    warnBox.style.display='none';
-  }
+  if(details.length){warnBox.style.display='block';warnBox.innerHTML=`<strong>⚠ メンバー被りの警告 ${details.length}件</strong><br>${details.map(d=>'・'+d).join('<br>')}`);}
+  else{warnBox.style.display='none';}
   let html='<div class="tt-card">';
   ttOrder.forEach((id,i)=>{
     const b=bands.find(x=>x.id===id);if(!b)return;
     const isWarn=conflicts.has(i);
     html+=`<div class="tt-row${isWarn?' warn':''}" draggable="true" data-idx="${i}"
-      ondragstart="onDragStart(event,${i})"
-      ondragover="onDragOver(event)"
-      ondrop="onDrop(event,${i})"
-      ondragend="onDragEnd(event)"
-      ondragleave="onDragLeave(event)">
+      ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event)"
+      ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)" ondragleave="onDragLeave(event)">
       <span class="tt-drag-handle">⠿</span>
       <span class="tt-num">${i+1}</span>
       <span class="tt-name">${esc(b.band)}</span>
@@ -529,7 +530,6 @@ function renderTimetable(){
   html+='</div>';
   body.innerHTML=html;
 }
-
 function onDragStart(e,idx){dragSrcIdx=idx;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
 function onDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over');}
 function onDragLeave(e){e.currentTarget.classList.remove('drag-over');}
@@ -538,10 +538,91 @@ function onDrop(e,idx){
   if(dragSrcIdx===null||dragSrcIdx===idx)return;
   const moved=ttOrder.splice(dragSrcIdx,1)[0];
   ttOrder.splice(idx,0,moved);
-  dragSrcIdx=null;
-  renderTimetable();
+  dragSrcIdx=null;renderTimetable();
 }
 function onDragEnd(e){e.currentTarget.classList.remove('dragging');dragSrcIdx=null;}
+
+// ===== メンバー一覧 =====
+function extractYear(name){
+  const m=name.match(/^(\d+)/);
+  return m?parseInt(m[1]):9999;
+}
+
+function buildMemberMap(targetBands){
+  // name -> { bands: [bandName,...] } のマップを作成
+  const map=new Map();
+  targetBands.forEach(b=>{
+    b.members.forEach(name=>{
+      const key=name.trim();
+      if(!key)return;
+      if(!map.has(key))map.set(key,{name:key,bands:[]});
+      map.get(key).bands.push({name:b.band,status:b.status});
+    });
+  });
+  return map;
+}
+
+function renderMembers(){
+  const filterMode=document.getElementById('member-filter').value;
+  const q=(document.getElementById('member-search').value||'').toLowerCase();
+  const targetBands=filterMode==='selected'?bands.filter(b=>b.status==='selected'):bands;
+
+  const map=buildMemberMap(targetBands);
+
+  // 検索フィルタ
+  let entries=[...map.values()].filter(m=>!q||m.name.toLowerCase().includes(q));
+
+  // 年度でグループ化（先頭の数字で判定）
+  const grouped=new Map();
+  entries.forEach(m=>{
+    const yr=extractYear(m.name);
+    const key=yr===9999?'年度不明':`${yr}年度`;
+    if(!grouped.has(key))grouped.set(key,[]);
+    grouped.get(key).push(m);
+  });
+
+  // 年度キーを数値順にソート
+  const sortedKeys=[...grouped.keys()].sort((a,b)=>{
+    const na=parseInt(a)||9999,nb=parseInt(b)||9999;
+    return na-nb;
+  });
+
+  // 統計
+  const total=map.size;
+  const multi=[...map.values()].filter(m=>m.bands.length>1).length;
+  document.getElementById('ms-unique').textContent=total;
+  document.getElementById('ms-multi').textContent=multi;
+  document.getElementById('ms-bands').textContent=targetBands.length;
+
+  const body=document.getElementById('members-body');
+  if(!entries.length){body.innerHTML='<p class="empty">該当するメンバーがいません</p>';return;}
+
+  let html='';
+  sortedKeys.forEach(yearKey=>{
+    const members=grouped.get(yearKey).sort((a,b)=>{
+      // 同年度内は名前のアルファベット順
+      const na=a.name.replace(/^\d+/,'').trim();
+      const nb=b.name.replace(/^\d+/,'').trim();
+      return na.localeCompare(nb,'ja');
+    });
+    html+=`<div class="year-group">
+      <div class="year-heading">${esc(yearKey)}　<span style="font-weight:400">${members.length}人</span></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>名前</th><th>出演バンド数</th><th>バンド</th></tr></thead>
+        <tbody>`;
+    members.forEach(m=>{
+      const pills=m.bands.map(b=>`<span class="band-pill ${b.status==='selected'?'selected':''}">${esc(b.name)}</span>`).join('');
+      const multiMark=m.bands.length>1?`<span style="font-size:11px;color:var(--warning);margin-left:4px">×${m.bands.length}</span>`:'';
+      html+=`<tr>
+        <td style="font-weight:500">${esc(m.name)}${multiMark}</td>
+        <td style="font-size:13px;text-align:center">${m.bands.length}</td>
+        <td><div class="band-pills">${pills}</div></td>
+      </tr>`;
+    });
+    html+='</tbody></table></div></div>';
+  });
+  body.innerHTML=html;
+}
 
 // ===== フォーム設定 =====
 function renderSettingsPanel(){
@@ -587,14 +668,11 @@ function saveSettings(){
   const newTitle=document.getElementById('cfg-title').value.trim()||DEFAULT_CONFIG.title;
   const newPw=document.getElementById('cfg-pw').value;
   const newMax=parseInt(document.getElementById('cfg-maxmembers').value)||8;
-  config.title=newTitle;
-  if(newPw)config.password=newPw;
-  config.maxMembers=newMax;
+  config.title=newTitle;if(newPw)config.password=newPw;config.maxMembers=newMax;
   saveConfig();
   document.getElementById('header-title').textContent=config.title;
   const saved=document.getElementById('settings-saved');
-  saved.style.display='block';
-  setTimeout(()=>saved.style.display='none',3000);
+  saved.style.display='block';setTimeout(()=>saved.style.display='none',3000);
 }
 
 // ===== データ出力 =====
@@ -607,18 +685,17 @@ function exportCSV(type){
   const header=['順位','バンド名','出演できない時間帯','全日出演可','代表者名','メールアドレス','メンバー人数',
     ...Array.from({length:config.maxMembers},(_,i)=>`メンバー${i+1}`),
     ...config.extraFields.map(f=>f.label),'状態','申込日時'];
-  const statusLabel=s=>s==='selected'?'当選':s==='substitute'?'補欠':s==='excluded'?'落選':'未確定';
+  const sl=s=>s==='selected'?'当選':s==='substitute'?'補欠':s==='excluded'?'落選':'未確定';
   const rows=target.map(b=>[
     b.rank||'',b.band,b.allfree?'':(b.unavail||''),b.allfree?'○':'',
     b.rep,b.email,b.members.length,
     ...Array.from({length:config.maxMembers},(_,i)=>b.members[i]||''),
     ...config.extraFields.map(f=>(b.extra&&b.extra[f.id])||''),
-    statusLabel(b.status),new Date(b.createdAt).toLocaleString('ja-JP')
+    sl(b.status),new Date(b.createdAt).toLocaleString('ja-JP')
   ]);
   const csv='\uFEFF'+[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   dl(csv,`acappella_${type}_${yyyymmdd()}.csv`,'text/csv;charset=utf-8');
 }
-
 function exportTimetableCSV(){
   if(!ttOrder.length){alert('タイムテーブルがまだ作成されていません。');return;}
   const header=['出演順','バンド名','代表者','メンバー','出演できない時間帯'];
@@ -629,7 +706,21 @@ function exportTimetableCSV(){
   const csv='\uFEFF'+[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   dl(csv,`timetable_${yyyymmdd()}.csv`,'text/csv;charset=utf-8');
 }
-
+function exportMembersCSV(){
+  const map=buildMemberMap(bands);
+  const entries=[...map.values()].sort((a,b)=>{
+    const ya=extractYear(a.name),yb=extractYear(b.name);
+    return ya!==yb?ya-yb:a.name.localeCompare(b.name,'ja');
+  });
+  if(!entries.length){alert('メンバーデータがありません。');return;}
+  const header=['名前','年度','出演バンド数','バンド一覧'];
+  const rows=entries.map(m=>{
+    const yr=extractYear(m.name);
+    return[m.name,yr===9999?'不明':yr,m.bands.length,m.bands.map(b=>b.name).join('・')];
+  });
+  const csv='\uFEFF'+[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl(csv,`members_${yyyymmdd()}.csv`,'text/csv;charset=utf-8');
+}
 function exportJSON(){dl(JSON.stringify({config,bands},null,2),`acappella_backup_${yyyymmdd()}.json`,'application/json');}
 function importJSON(e){
   const f=e.target.files[0];if(!f)return;
@@ -653,6 +744,3 @@ function dl(content,name,type){const a=document.createElement('a');a.href=URL.cr
 </script>
 </body>
 </html>
-```
-
-丸ごと貼り替えてください。タイムテーブルCSV出力ボタンも追加してあります。
