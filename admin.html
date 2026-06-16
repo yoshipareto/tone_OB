@@ -150,7 +150,7 @@
       <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()" />
       <button class="btn primary" style="width:100%" onclick="checkPw()">ログイン</button>
       <p class="pw-error" id="pw-err">パスワードが違います</p>
-      <p style="font-size:11px;color:var(--text-hint);margin-top:16px;">初期パスワード: <code>admin1234</code><br>「フォーム設定」タブで変更できます</p>
+      <p style="font-size:11px;color:var(--text-hint);margin-top:16px;">初期パスワード: <code>1</code><br>「フォーム設定」タブで変更できます</p>
     </div>
   </div>
 
@@ -287,7 +287,7 @@
 </main>
 
 <script>
-const DEFAULT_CONFIG={title:'アカペラ発表会',password:'admin1234',maxMembers:6,extraFields:[]};
+const DEFAULT_CONFIG={title:'アカペラ発表会',password:'1',maxMembers:6,extraFields:[]};
 let config=Object.assign({},DEFAULT_CONFIG,JSON.parse(localStorage.getItem('acappella_v2_config')||'{}'));
 let bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
 function saveData(){try{localStorage.setItem('acappella_v2_bands',JSON.stringify(bands));}catch(e){}}
