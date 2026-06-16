@@ -1,3 +1,15 @@
+提供されたHTMLコードから、**「パスワードによるログイン機能（保護画面）」を完全に削除**し、ページを開いたらすぐにダッシュボードが表示されるように修正しました。
+
+以下の変更を行っています：
+
+1. 画面を覆っていたパスワード入力用のオーバーレイ要素（`#pw-overlay`）を削除。
+2. ページ読み込み完了時（`window.onload`）に、自動的に初期データ（回答一覧など）を描画する処理を追加。
+3. 不要になったパスワードチェック関数（`checkPw`）を削除。
+4. 「フォーム設定」タブ内のパスワード変更入力欄を削除。
+
+### 修正済みのHTMLコード
+
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -22,14 +34,6 @@
   .form-link{font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:5px 14px;border-radius:99px;}
   .form-link:hover{background:var(--accent-bg);}
   main{max-width:760px;margin:0 auto;padding:40px 24px 80px;}
-
-  .pw-overlay{position:fixed;inset:0;background:rgba(250,250,248,.97);display:flex;align-items:center;justify-content:center;z-index:200;}
-  .pw-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:360px;text-align:center;}
-  .pw-box h2{font-size:18px;font-weight:700;margin-bottom:6px;}
-  .pw-box p{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
-  .pw-box input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:inherit;text-align:center;letter-spacing:.1em;margin-bottom:12px;}
-  .pw-box input:focus{outline:none;border-color:var(--accent);}
-  .pw-error{font-size:13px;color:var(--danger);margin-top:8px;display:none;}
 
   .admin-header{margin-bottom:24px;}
   .admin-header h2{font-size:22px;font-weight:700;margin-bottom:4px;letter-spacing:-0.02em;}
@@ -152,17 +156,6 @@
 </header>
 
 <main>
-  <div id="pw-overlay" class="pw-overlay">
-    <div class="pw-box">
-      <h2>🔒 運営者ページ</h2>
-      <p>パスワードを入力してください</p>
-      <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()" />
-      <button class="btn primary" style="width:100%" onclick="checkPw()">ログイン</button>
-      <p class="pw-error" id="pw-err">パスワードが違います</p>
-      <p style="font-size:11px;color:var(--text-hint);margin-top:16px;">初期パスワード: <code>admin1234</code><br>「フォーム設定」タブで変更できます</p>
-    </div>
-  </div>
-
   <div class="admin-header">
     <h2>運営ダッシュボード</h2>
     <p>申し込みの確認・抽選・タイムテーブル・メンバー一覧・フォーム設定・データ出力ができます。</p>
@@ -261,10 +254,6 @@
             <label>発表会タイトル</label>
             <input type="text" id="cfg-title" placeholder="OBOGライブ~延長戦~" />
           </div>
-          <div class="settings-field">
-            <label>管理パスワード（変更する場合のみ入力）</label>
-            <input type="password" id="cfg-pw" placeholder="新しいパスワード" />
-          </div>
         </div>
         <div class="settings-card">
           <h3>メンバー人数上限</h3>
@@ -321,21 +310,18 @@
 </main>
 
 <script>
-const DEFAULT_CONFIG={title:'OBOGライブ~延長戦~',password:'admin1234',maxMembers:8,extraFields:[]};
+const DEFAULT_CONFIG={title:'OBOGライブ~延長戦~',maxMembers:8,extraFields:[]};
 let config=Object.assign({},DEFAULT_CONFIG,JSON.parse(localStorage.getItem('acappella_v2_config')||'{}'));
 let bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
 function saveData(){try{localStorage.setItem('acappella_v2_bands',JSON.stringify(bands));}catch(e){}}
 function saveConfig(){try{localStorage.setItem('acappella_v2_config',JSON.stringify(config));}catch(e){}}
 
-function checkPw(){
-  if(document.getElementById('pw-input').value===config.password){
-    document.getElementById('pw-overlay').style.display='none';
-    renderAnswers();renderSettingsPanel();
-  }else{
-    document.getElementById('pw-err').style.display='block';
-    document.getElementById('pw-input').value='';
-  }
-}
+// ページ読み込み時にダッシュボードを初期化
+window.onload = function() {
+  document.getElementById('header-title').textContent = config.title;
+  renderAnswers();
+  renderSettingsPanel();
+};
 
 function showSubtab(name,btn){
   document.querySelectorAll('.subtab').forEach(el=>el.classList.remove('active'));
@@ -384,7 +370,7 @@ function showDetail(id){
     <tr><td style="color:var(--text-muted);padding:4px 0">出演できない時間帯</td><td>${esc(unavailStr)}</td></tr>
     <tr><td style="color:var(--text-muted);padding:4px 0">代表者名</td><td>${esc(b.rep)}</td></tr>
     <tr><td style="color:var(--text-muted);padding:4px 0">メールアドレス</td><td><a href="mailto:${esc(b.email)}" style="color:var(--accent)">${esc(b.email)}</a></td></tr>
-    <tr><td style="color:var(--text-muted);padding:4px 0">メンバー（${b.members.length}人）</td><td>${b.members.map(esc).join('　')}</td></tr>
+    <tr><td style="color:var(--text-muted);padding:4px 0">メンバー（${b.members.length}人）</td><td>${b.members.map(esc).join(' ')}</td></tr>
     ${extraHtml}
     <tr><td style="color:var(--text-muted);padding:4px 0">申込日時</td><td>${new Date(b.createdAt).toLocaleString('ja-JP')}</td></tr>
   </table>`;
@@ -423,7 +409,7 @@ function renderLotteryResult(){
   const sub=bands.filter(b=>b.status==='substitute').length;
   const exc=bands.filter(b=>b.status==='excluded').length;
   sumBox.style.display='block';
-  sumBox.textContent=`全${bands.length}バンド　当選 ${sel} / 補欠 ${sub} / 落選 ${exc} / 未確定 ${bands.length-sel-sub-exc}`;
+  sumBox.textContent=`全${bands.length}バンド 当選 ${sel} / 補欠 ${sub} / 落選 ${exc} / 未確定 ${bands.length-sel-sub-exc}`;
   let subCount=0;
   let html='<div class="result-card">';
   ranked.forEach(b=>{
@@ -523,7 +509,7 @@ function renderTimetable(){
       <span class="tt-drag-handle">⠿</span>
       <span class="tt-num">${i+1}</span>
       <span class="tt-name">${esc(b.band)}</span>
-      <span class="tt-members">${b.members.map(esc).join('　')}</span>
+      <span class="tt-members">${b.members.map(esc).join(' ')}</span>
       ${isWarn?'<span class="tt-warn-label">⚠ 被り</span>':''}
     </div>`;
   });
@@ -549,7 +535,6 @@ function extractYear(name){
 }
 
 function buildMemberMap(targetBands){
-  // name -> { bands: [bandName,...] } のマップを作成
   const map=new Map();
   targetBands.forEach(b=>{
     b.members.forEach(name=>{
@@ -569,10 +554,8 @@ function renderMembers(){
 
   const map=buildMemberMap(targetBands);
 
-  // 検索フィルタ
   let entries=[...map.values()].filter(m=>!q||m.name.toLowerCase().includes(q));
 
-  // 年度でグループ化（先頭の数字で判定）
   const grouped=new Map();
   entries.forEach(m=>{
     const yr=extractYear(m.name);
@@ -581,13 +564,11 @@ function renderMembers(){
     grouped.get(key).push(m);
   });
 
-  // 年度キーを数値順にソート
   const sortedKeys=[...grouped.keys()].sort((a,b)=>{
     const na=parseInt(a)||9999,nb=parseInt(b)||9999;
     return na-nb;
   });
 
-  // 統計
   const total=map.size;
   const multi=[...map.values()].filter(m=>m.bands.length>1).length;
   document.getElementById('ms-unique').textContent=total;
@@ -600,13 +581,12 @@ function renderMembers(){
   let html='';
   sortedKeys.forEach(yearKey=>{
     const members=grouped.get(yearKey).sort((a,b)=>{
-      // 同年度内は名前のアルファベット順
       const na=a.name.replace(/^\d+/,'').trim();
       const nb=b.name.replace(/^\d+/,'').trim();
       return na.localeCompare(nb,'ja');
     });
     html+=`<div class="year-group">
-      <div class="year-heading">${esc(yearKey)}　<span style="font-weight:400">${members.length}人</span></div>
+      <div class="year-heading">${esc(yearKey)} <span style="font-weight:400">${members.length}人</span></div>
       <div class="table-wrap"><table>
         <thead><tr><th>名前</th><th>出演バンド数</th><th>バンド</th></tr></thead>
         <tbody>`;
@@ -627,7 +607,6 @@ function renderMembers(){
 // ===== フォーム設定 =====
 function renderSettingsPanel(){
   document.getElementById('cfg-title').value=config.title;
-  document.getElementById('cfg-pw').value='';
   document.getElementById('cfg-maxmembers').value=config.maxMembers;
   renderExtraFieldList();renderPreview();
 }
@@ -666,9 +645,8 @@ function removeExtraField(i){config.extraFields.splice(i,1);renderExtraFieldList
 function toggleRequired(i){config.extraFields[i].required=!config.extraFields[i].required;renderExtraFieldList();renderPreview();}
 function saveSettings(){
   const newTitle=document.getElementById('cfg-title').value.trim()||DEFAULT_CONFIG.title;
-  const newPw=document.getElementById('cfg-pw').value;
   const newMax=parseInt(document.getElementById('cfg-maxmembers').value)||8;
-  config.title=newTitle;if(newPw)config.password=newPw;config.maxMembers=newMax;
+  config.title=newTitle;config.maxMembers=newMax;
   saveConfig();
   document.getElementById('header-title').textContent=config.title;
   const saved=document.getElementById('settings-saved');
@@ -744,3 +722,5 @@ function dl(content,name,type){const a=document.createElement('a');a.href=URL.cr
 </script>
 </body>
 </html>
+
+```
