@@ -86,7 +86,6 @@
   </div>
 
   <div class="section-label">バンドメンバー（記入例：21あんころ）</div>
-  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;"></p>
   <div class="member-grid" id="member-grid"></div>
   <div id="extra-fields-form"></div>
 
@@ -95,15 +94,12 @@
   <div class="error-msg" id="err-msg"></div>
 </main>
 <script>
-const DEFAULT_CONFIG={title:'アカペラ発表会',password:'admin1234',maxMembers:6,extraFields:[]};
+const DEFAULT_CONFIG={title:'OBOGライブ~延長戦~',password:'admin1234',maxMembers:8,extraFields:[]};
 let config=Object.assign({},DEFAULT_CONFIG,JSON.parse(localStorage.getItem('acappella_v2_config')||'{}'));
 let bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
 function saveData(){try{localStorage.setItem('acappella_v2_bands',JSON.stringify(bands));}catch(e){}}
 
 function init(){
-  document.getElementById('page-title').textContent=config.title+' 申し込みフォーム';
-  document.getElementById('header-title').textContent=config.title;
-  document.getElementById('form-h1').textContent=config.title+' 出演申し込みフォーム';
   renderMemberFields();
   renderExtraFieldsForm();
 }
@@ -113,7 +109,9 @@ function renderMemberFields(){
   let html='';
   for(let i=1;i<=config.maxMembers;i++){
     const req=i<=2;
-    html+=`<div class="field"><label>${nums[i-1]} トーンネーム ${req?'<span class="req">*</span>':'<span class="hint">任意</span>'}</label><input type="text" id="m${i}" placeholder="${req?'21あんころ'}" /></div>`;
+    const placeholder=req?'21あんころ':'';
+    const reqLabel=req?'<span class="req">*</span>':'<span class="hint">任意</span>';
+    html+=`<div class="field"><label>${nums[i-1]} トーンネーム ${reqLabel}</label><input type="text" id="m${i}" placeholder="${placeholder}" /></div>`;
   }
   document.getElementById('member-grid').innerHTML=html;
 }
