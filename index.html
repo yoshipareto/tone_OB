@@ -3,893 +3,176 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>アカペラ発表会 申し込みフォーム</title>
+<title id="page-title">申し込みフォーム</title>
 <style>
   :root {
-    --bg: #fafaf8;
-    --surface: #ffffff;
-    --border: #e4e2dc;
-    --border-strong: #c8c5bc;
-    --text: #1a1917;
-    --text-muted: #6b6860;
-    --text-hint: #a09d96;
-    --accent: #2d5be3;
-    --accent-bg: #eef2fd;
-    --success: #1a7a4a;
-    --success-bg: #e8f7ef;
-    --danger: #c0392b;
-    --danger-bg: #fdf0ee;
-    --warning-bg: #fdf6e3;
-    --warning: #8a6500;
-    --radius: 8px;
-    --radius-lg: 12px;
+    --bg:#fafaf8;--surface:#ffffff;--border:#e4e2dc;
+    --text:#1a1917;--text-muted:#6b6860;--text-hint:#a09d96;
+    --accent:#2d5be3;--accent-bg:#eef2fd;
+    --success:#1a7a4a;--success-bg:#e8f7ef;
+    --danger:#c0392b;--danger-bg:#fdf0ee;
+    --radius:8px;--radius-lg:12px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 15px;
-    line-height: 1.6;
-    min-height: 100vh;
-  }
-
-  /* Header */
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    height: 56px;
-  }
-  .logo { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
-  .logo span { color: var(--accent); }
-  .mode-toggle { display: flex; gap: 4px; }
-  .mode-btn {
-    padding: 5px 14px;
-    border: 1px solid var(--border);
-    background: transparent;
-    border-radius: 99px;
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: all 0.15s;
-    font-family: inherit;
-  }
-  .mode-btn.active {
-    background: var(--text);
-    color: #fff;
-    border-color: var(--text);
-  }
-
-  /* Layout */
-  main { max-width: 680px; margin: 0 auto; padding: 40px 24px 80px; }
-
-  /* Pages */
-  .page { display: none; }
-  .page.active { display: block; }
-
-  /* Form page */
-  .form-header { margin-bottom: 32px; }
-  .form-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
-  .form-header p { color: var(--text-muted); font-size: 14px; }
-
-  .field { margin-bottom: 18px; }
-  .field label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-  .field label .req { color: var(--danger); margin-left: 3px; }
-  .field label .hint { font-weight: 400; color: var(--text-hint); margin-left: 6px; font-size: 12px; }
-  .field input, .field select, .field textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 15px;
-    font-family: inherit;
-    background: var(--surface);
-    color: var(--text);
-    transition: border-color 0.15s, box-shadow 0.15s;
-    appearance: none;
-  }
-  .field select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 36px;
-  }
-  .field input:focus, .field select:focus, .field textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(45,91,227,0.1);
-  }
-  .field input.error, .field select.error { border-color: var(--danger); }
-
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media(max-width:500px) { .row2 { grid-template-columns: 1fr; } }
-
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-hint);
-    margin: 28px 0 14px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-  .member-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  @media(max-width:500px) { .member-grid { grid-template-columns: 1fr; } }
-
-  .submit-btn {
-    width: 100%;
-    margin-top: 28px;
-    padding: 13px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-  .submit-btn:hover { opacity: 0.88; }
-  .submit-btn:active { transform: scale(0.99); }
-
-  .toast {
-    display: none;
-    margin-top: 14px;
-    padding: 12px 16px;
-    background: var(--success-bg);
-    color: var(--success);
-    border: 1px solid #a8dfc0;
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .error-msg {
-    display: none;
-    margin-top: 14px;
-    padding: 12px 16px;
-    background: var(--danger-bg);
-    color: var(--danger);
-    border: 1px solid #f0b8b2;
-    border-radius: var(--radius);
-    font-size: 14px;
-  }
-
-  /* Admin page */
-  .admin-header { margin-bottom: 24px; }
-  .admin-header h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.02em; }
-  .admin-header p { font-size: 13px; color: var(--text-muted); }
-
-  .tabs {
-    display: flex;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
-    gap: 0;
-  }
-  .tab {
-    padding: 10px 18px;
-    border: none;
-    background: none;
-    font-size: 14px;
-    font-family: inherit;
-    cursor: pointer;
-    color: var(--text-muted);
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    transition: color 0.15s;
-  }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
-  .tab:hover:not(.active) { color: var(--text); }
-  .subtab { display: none; }
-  .subtab.active { display: block; }
-
-  /* Stats */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3,1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .stat {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-  }
-  .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-  .stat-value { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
-  .stat-value.green { color: var(--success); }
-  .stat-value.blue { color: var(--accent); }
-
-  /* Controls */
-  .ctrl-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .ctrl-row input[type=text] {
-    flex: 1;
-    min-width: 140px;
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-family: inherit;
-    background: var(--surface);
-  }
-  .ctrl-row input[type=text]:focus { outline: none; border-color: var(--accent); }
-  .ctrl-row select {
-    padding: 8px 30px 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 13px;
-    font-family: inherit;
-    background: var(--surface);
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    cursor: pointer;
-  }
-  .btn {
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    border-radius: var(--radius);
-    font-size: 13px;
-    font-family: inherit;
-    cursor: pointer;
-    color: var(--text);
-    white-space: nowrap;
-    transition: background 0.12s;
-  }
-  .btn:hover { background: var(--bg); }
-  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .btn.primary:hover { opacity: 0.88; }
-  .btn.danger { color: var(--danger); border-color: #f0b8b2; }
-  .btn.danger:hover { background: var(--danger-bg); }
-  .btn.success-btn { background: var(--success); color: #fff; border-color: var(--success); }
-
-  /* Table */
-  .table-wrap { overflow-x: auto; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    min-width: 520px;
-  }
-  th {
-    text-align: left;
-    padding: 8px 12px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--bg); }
-  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-
-  .badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 9px;
-    border-radius: 99px;
-  }
-  .badge-pending { background: #f0efea; color: var(--text-muted); }
-  .badge-selected { background: var(--success-bg); color: var(--success); }
-  .badge-excluded { background: var(--danger-bg); color: var(--danger); }
-
-  .del-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-hint);
-    font-size: 18px;
-    line-height: 1;
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-  .del-btn:hover { color: var(--danger); background: var(--danger-bg); }
-  .empty { text-align: center; padding: 48px 0; color: var(--text-hint); font-size: 14px; }
-
-  /* Detail modal */
-  .detail-link { color: var(--accent); cursor: pointer; text-decoration: underline; font-size: 13px; }
-
-  /* Lottery */
-  .lottery-config {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-  .lottery-config h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
-  .config-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-  .config-row label { font-size: 13px; color: var(--text-muted); min-width: 100px; }
-  .config-row input[type=number] {
-    width: 70px;
-    padding: 7px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-family: inherit;
-  }
-  .config-row input[type=number]:focus { outline: none; border-color: var(--accent); }
-  .config-row select {
-    padding: 7px 28px 7px 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 13px;
-    font-family: inherit;
-    background: var(--surface);
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    cursor: pointer;
-  }
-
-  .lottery-btns { display: flex; gap: 8px; margin-top: 4px; }
-
-  .result-section { margin-top: 4px; }
-  .result-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-hint);
-    margin-bottom: 8px;
-    margin-top: 20px;
-  }
-  .result-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-  .result-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-  }
-  .result-item:last-child { border-bottom: none; }
-  .result-num { font-size: 13px; color: var(--text-hint); min-width: 20px; }
-  .result-name { font-size: 14px; font-weight: 600; flex: 1; }
-  .result-rep { font-size: 12px; color: var(--text-muted); }
-  .result-time { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
-  .result-excluded .result-name { color: var(--text-muted); font-weight: 400; }
-
-  .lottery-summary {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-    padding: 10px 14px;
-    background: var(--warning-bg);
-    border-radius: var(--radius);
-    border: 1px solid #e8d79a;
-  }
-
-  /* Export */
-  .export-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    margin-top: 16px;
-  }
-  .export-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-  .export-section p { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
-
-  /* Password */
-  .pw-overlay {
-    position: fixed; inset: 0;
-    background: rgba(250,250,248,0.95);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 200;
-  }
-  .pw-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    width: 100%;
-    max-width: 360px;
-    text-align: center;
-  }
-  .pw-box h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-  .pw-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
-  .pw-box input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 15px;
-    font-family: inherit;
-    text-align: center;
-    letter-spacing: 0.1em;
-    margin-bottom: 12px;
-  }
-  .pw-box input:focus { outline: none; border-color: var(--accent); }
-  .pw-error { font-size: 13px; color: var(--danger); margin-top: 8px; display: none; }
-
-  /* Responsive */
-  @media(max-width:480px) {
-    main { padding: 24px 16px 60px; }
-    .stats { grid-template-columns: 1fr 1fr; }
-    .stats .stat:last-child { grid-column: span 2; }
-  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;height:56px;}
+  .logo{font-size:15px;font-weight:600;letter-spacing:-0.01em;}
+  .logo span{color:var(--accent);}
+  main{max-width:640px;margin:0 auto;padding:40px 24px 80px;}
+  .form-header{margin-bottom:32px;}
+  .form-header h1{font-size:26px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px;}
+  .form-header p{color:var(--text-muted);font-size:14px;}
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;}
+  .field label .req{color:var(--danger);margin-left:3px;}
+  .field label .hint{font-weight:400;color:var(--text-hint);margin-left:6px;font-size:12px;}
+  .field input,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:inherit;background:var(--surface);color:var(--text);}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(45,91,227,.1);}
+  .field input.error,.field textarea.error{border-color:var(--danger);}
+  .field textarea{resize:vertical;min-height:80px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:500px){.row2{grid-template-columns:1fr;}}
+  .section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-hint);margin:28px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .member-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:500px){.member-grid{grid-template-columns:1fr;}}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;}
+  .checkbox-row input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent);}
+  .checkbox-row span{font-size:14px;}
+  .unavail-note{font-size:13px;color:var(--text-muted);margin-bottom:8px;}
+  .submit-btn{width:100%;margin-top:28px;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .submit-btn:hover{opacity:.88;}
+  .toast{display:none;margin-top:14px;padding:12px 16px;background:var(--success-bg);color:var(--success);border:1px solid #a8dfc0;border-radius:var(--radius);font-size:14px;font-weight:500;}
+  .error-msg{display:none;margin-top:14px;padding:12px 16px;background:var(--danger-bg);color:var(--danger);border:1px solid #f0b8b2;border-radius:var(--radius);font-size:14px;}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="logo">🎵 <span>アカペラ</span>発表会</div>
-  <div class="mode-toggle">
-    <button class="mode-btn active" id="btn-form" onclick="switchMode('form')">申し込み</button>
-    <button class="mode-btn" id="btn-admin" onclick="switchMode('admin')">運営</button>
-  </div>
+  <div class="logo">🎵 <span id="header-title">アカペラ</span>発表会</div>
 </header>
-
 <main>
-  <!-- ========== 申し込みフォーム ========== -->
-  <div class="page active" id="page-form">
-    <div class="form-header">
-      <h1>出演申し込みフォーム</h1>
-      <p>必須項目（<span style="color:var(--danger)">*</span>）をすべてご入力のうえ送信してください。</p>
-    </div>
-
-    <div class="section-label">バンド情報</div>
-    <div class="row2">
-      <div class="field">
-        <label>バンド名 <span class="req">*</span></label>
-        <input type="text" id="f-band" placeholder="例：ハーモニーズ" />
-      </div>
-      <div class="field">
-        <label>出演希望時間帯 <span class="req">*</span></label>
-        <select id="f-time">
-          <option value="">選択してください</option>
-          <option>13:00〜13:15</option>
-          <option>13:15〜13:30</option>
-          <option>13:30〜13:45</option>
-          <option>13:45〜14:00</option>
-          <option>14:00〜14:15</option>
-          <option>14:15〜14:30</option>
-          <option>14:30〜14:45</option>
-          <option>14:45〜15:00</option>
-          <option>特になし（どこでも可）</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="section-label">代表者情報</div>
-    <div class="row2">
-      <div class="field">
-        <label>代表者名 <span class="req">*</span></label>
-        <input type="text" id="f-rep" placeholder="山田 太郎" />
-      </div>
-      <div class="field">
-        <label>代表者メールアドレス <span class="req">*</span></label>
-        <input type="email" id="f-email" placeholder="example@email.com" />
-      </div>
-    </div>
-
-    <div class="section-label">バンドメンバー</div>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">①②は必須、③〜⑥は任意です。</p>
-    <div class="member-grid">
-      <div class="field"><label>① 氏名 <span class="req">*</span></label><input type="text" id="m1" placeholder="メンバー①" /></div>
-      <div class="field"><label>② 氏名 <span class="req">*</span></label><input type="text" id="m2" placeholder="メンバー②" /></div>
-      <div class="field"><label>③ 氏名 <span class="hint">任意</span></label><input type="text" id="m3" placeholder="" /></div>
-      <div class="field"><label>④ 氏名 <span class="hint">任意</span></label><input type="text" id="m4" placeholder="" /></div>
-      <div class="field"><label>⑤ 氏名 <span class="hint">任意</span></label><input type="text" id="m5" placeholder="" /></div>
-      <div class="field"><label>⑥ 氏名 <span class="hint">任意</span></label><input type="text" id="m6" placeholder="" /></div>
-    </div>
-
-    <button class="submit-btn" onclick="submitForm()">申し込む →</button>
-    <div class="toast" id="toast">✓ 申し込みを受け付けました！担当者より連絡が届きます。</div>
-    <div class="error-msg" id="err-msg">入力内容を確認してください。</div>
+  <div class="form-header">
+    <h1 id="form-h1">出演申し込みフォーム</h1>
+    <p>必須項目（<span style="color:var(--danger)">*</span>）をすべてご入力のうえ送信してください。</p>
   </div>
 
-  <!-- ========== 運営画面 ========== -->
-  <div class="page" id="page-admin">
-    <div id="pw-overlay" class="pw-overlay">
-      <div class="pw-box">
-        <h2>🔒 運営者ページ</h2>
-        <p>パスワードを入力してください</p>
-        <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()" />
-        <button class="btn primary" style="width:100%" onclick="checkPw()">ログイン</button>
-        <p class="pw-error" id="pw-err">パスワードが違います</p>
-        <p style="font-size:11px;color:var(--text-hint);margin-top:16px;">初期パスワード: <code>admin1234</code><br>HTMLファイル内の ADMIN_PASSWORD を変更できます</p>
-      </div>
-    </div>
+  <div class="section-label">バンド情報</div>
+  <div class="field">
+    <label>バンド名 <span class="req">*</span></label>
+    <input type="text" id="f-band" placeholder="例：ハーモニーズ" />
+  </div>
 
-    <div class="admin-header">
-      <h2>運営ダッシュボード</h2>
-      <p>申し込みの確認・抽選・データ出力ができます。</p>
-    </div>
-
-    <div class="tabs">
-      <button class="tab active" onclick="showSubtab('answers')">回答一覧</button>
-      <button class="tab" onclick="showSubtab('lottery')">抽選</button>
-      <button class="tab" onclick="showSubtab('export')">データ出力</button>
-    </div>
-
-    <!-- 回答一覧 -->
-    <div class="subtab active" id="subtab-answers">
-      <div class="stats">
-        <div class="stat"><div class="stat-label">申し込み総数</div><div class="stat-value blue" id="st-total">0</div></div>
-        <div class="stat"><div class="stat-label">当選済み</div><div class="stat-value green" id="st-sel">0</div></div>
-        <div class="stat"><div class="stat-label">未確定</div><div class="stat-value" id="st-pend">0</div></div>
-      </div>
-      <div class="ctrl-row">
-        <input type="text" id="search" placeholder="バンド名・代表者で検索…" oninput="renderAnswers()" />
-        <select id="filt-status" onchange="renderAnswers()">
-          <option value="">すべて</option>
-          <option value="pending">未確定</option>
-          <option value="selected">当選</option>
-          <option value="excluded">落選</option>
-        </select>
-        <button class="btn danger" onclick="clearAll()">全削除</button>
-      </div>
-      <div class="table-wrap" id="answers-table">
-        <p class="empty">申し込みがまだありません</p>
-      </div>
-
-      <!-- Detail panel -->
-      <div id="detail-panel" style="display:none;margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <h3 id="dp-band" style="font-size:16px;font-weight:700;"></h3>
-          <button class="btn" onclick="document.getElementById('detail-panel').style.display='none'">✕ 閉じる</button>
-        </div>
-        <div id="dp-body" style="font-size:13px;line-height:2;"></div>
-      </div>
-    </div>
-
-    <!-- 抽選 -->
-    <div class="subtab" id="subtab-lottery">
-      <div class="lottery-config">
-        <h3>抽選設定</h3>
-        <div class="config-row">
-          <label>当選枠数</label>
-          <input type="number" id="slots" value="5" min="1" max="99" />
-          <span style="font-size:13px;color:var(--text-muted)">バンド</span>
-        </div>
-        <div class="config-row">
-          <label>抽選モード</label>
-          <select id="lottery-mode">
-            <option value="random">完全ランダム</option>
-            <option value="time">希望時間帯を考慮（ランダム）</option>
-            <option value="small">少人数バンド優先</option>
-            <option value="large">多人数バンド優先</option>
-            <option value="first">先着順（申し込み順）</option>
-          </select>
-        </div>
-        <div class="lottery-btns">
-          <button class="btn primary" onclick="runLottery()">▶ 抽選を実行</button>
-          <button class="btn" onclick="resetLottery()">↺ リセット</button>
-        </div>
-      </div>
-
-      <div id="lottery-summary-box" style="display:none" class="lottery-summary"></div>
-      <div class="result-section" id="lottery-result"></div>
-    </div>
-
-    <!-- データ出力 -->
-    <div class="subtab" id="subtab-export">
-      <div class="export-section">
-        <h3>CSVダウンロード</h3>
-        <p>申し込みデータをCSV形式でダウンロードできます。Excelやスプレッドシートで開けます。</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn primary" onclick="exportCSV('all')">全データをCSVで保存</button>
-          <button class="btn success-btn" onclick="exportCSV('selected')">当選者のみCSVで保存</button>
-        </div>
-      </div>
-      <div class="export-section" style="margin-top:0;">
-        <h3>データのバックアップ・復元</h3>
-        <p>データをJSONとして保存・読み込みできます。別のPCに移す際などに使用します。</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn" onclick="exportJSON()">JSONで書き出し</button>
-          <button class="btn" onclick="document.getElementById('import-file').click()">JSONを読み込む</button>
-          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)" />
-        </div>
-      </div>
+  <div class="field">
+    <label>出演できない時間帯 <span class="req">*</span></label>
+    <label class="checkbox-row">
+      <input type="checkbox" id="f-allfree" onchange="toggleUnavail()" />
+      <span>全日出演可（時間帯の制約なし）</span>
+    </label>
+    <div id="unavail-text-wrap">
+      <p class="unavail-note">出演できない時間帯があれば自由にご記入ください。</p>
+      <textarea id="f-unavail" placeholder="例：13:00〜14:00は授業があるため出演不可"></textarea>
     </div>
   </div>
+
+  <div class="section-label">代表者情報</div>
+  <div class="row2">
+    <div class="field">
+      <label>代表者名 <span class="req">*</span></label>
+      <input type="text" id="f-rep" placeholder="山田 太郎" />
+    </div>
+    <div class="field">
+      <label>代表者メールアドレス <span class="req">*</span></label>
+      <input type="email" id="f-email" placeholder="example@email.com" />
+    </div>
+  </div>
+
+  <div class="section-label">バンドメンバー</div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">①②は必須、③以降は任意です。</p>
+  <div class="member-grid" id="member-grid"></div>
+  <div id="extra-fields-form"></div>
+
+  <button class="submit-btn" onclick="submitForm()">申し込む →</button>
+  <div class="toast" id="toast">✓ 申し込みを受け付けました！担当者より連絡が届きます。</div>
+  <div class="error-msg" id="err-msg"></div>
 </main>
-
 <script>
-// ===== 設定 =====
-const ADMIN_PASSWORD = 'admin1234'; // ← ここを変更してください
+const DEFAULT_CONFIG={title:'アカペラ発表会',password:'admin1234',maxMembers:6,extraFields:[]};
+let config=Object.assign({},DEFAULT_CONFIG,JSON.parse(localStorage.getItem('acappella_v2_config')||'{}'));
+let bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
+function saveData(){try{localStorage.setItem('acappella_v2_bands',JSON.stringify(bands));}catch(e){}}
 
-// ===== データ管理 =====
-let bands = JSON.parse(localStorage.getItem('acappella_v1') || '[]');
-function save() {
-  try { localStorage.setItem('acappella_v1', JSON.stringify(bands)); } catch(e){}
+function init(){
+  document.getElementById('page-title').textContent=config.title+' 申し込みフォーム';
+  document.getElementById('header-title').textContent=config.title;
+  document.getElementById('form-h1').textContent=config.title+' 出演申し込みフォーム';
+  renderMemberFields();
+  renderExtraFieldsForm();
 }
 
-// ===== モード切替 =====
-function switchMode(mode) {
-  document.getElementById('page-form').classList.toggle('active', mode==='form');
-  document.getElementById('page-admin').classList.toggle('active', mode==='admin');
-  document.getElementById('btn-form').classList.toggle('active', mode==='form');
-  document.getElementById('btn-admin').classList.toggle('active', mode==='admin');
-  if(mode==='admin') renderAnswers();
-}
-
-// ===== パスワード =====
-let adminUnlocked = false;
-function checkPw() {
-  const val = document.getElementById('pw-input').value;
-  if(val === ADMIN_PASSWORD) {
-    adminUnlocked = true;
-    document.getElementById('pw-overlay').style.display = 'none';
-    renderAnswers();
-  } else {
-    document.getElementById('pw-err').style.display = 'block';
-    document.getElementById('pw-input').value = '';
+function renderMemberFields(){
+  const nums=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+  let html='';
+  for(let i=1;i<=config.maxMembers;i++){
+    const req=i<=2;
+    html+=`<div class="field"><label>${nums[i-1]} 氏名 ${req?'<span class="req">*</span>':'<span class="hint">任意</span>'}</label><input type="text" id="m${i}" placeholder="${req?'メンバー'+nums[i-1]:''}" /></div>`;
   }
+  document.getElementById('member-grid').innerHTML=html;
 }
 
-// ===== フォーム送信 =====
-function submitForm() {
-  const band  = v('f-band');
-  const time  = v('f-time');
-  const rep   = v('f-rep');
-  const email = v('f-email');
-  const m1    = v('m1');
-  const m2    = v('m2');
-
-  const errs = [];
-  ['f-band','f-time','f-rep','f-email','m1','m2'].forEach(id => {
-    const el = document.getElementById(id);
-    if(!v(id)) { el.classList.add('error'); errs.push(id); }
-    else el.classList.remove('error');
+function renderExtraFieldsForm(){
+  const wrap=document.getElementById('extra-fields-form');
+  if(!config.extraFields.length){wrap.innerHTML='';return;}
+  let html='<div class="section-label">その他</div>';
+  config.extraFields.forEach(f=>{
+    html+=`<div class="field"><label>${esc(f.label)}${f.required?' <span class="req">*</span>':' <span class="hint">任意</span>'}</label><textarea id="ef-${f.id}" placeholder="自由にご記入ください"></textarea></div>`;
   });
-  if(errs.length) {
-    show('err-msg', '必須項目（*）を入力してください。');
-    return;
-  }
-  hide('err-msg');
+  wrap.innerHTML=html;
+}
 
-  const members = [];
-  for(let i=1;i<=6;i++) { const val=v('m'+i); if(val) members.push(val); }
+function toggleUnavail(){
+  document.getElementById('unavail-text-wrap').style.display=document.getElementById('f-allfree').checked?'none':'block';
+}
 
-  bands.push({
-    id: Date.now(),
-    band, time, rep, email, members,
-    status: 'pending',
-    createdAt: new Date().toISOString()
+function submitForm(){
+  const band=v('f-band');
+  const allfree=document.getElementById('f-allfree').checked;
+  const unavail=allfree?'全日出演可':v('f-unavail');
+  const rep=v('f-rep');
+  const email=v('f-email');
+  let errs=[];
+  setErr('f-band',!band,errs,'バンド名');
+  if(!allfree)setErr('f-unavail',!unavail,errs,'出演できない時間帯');
+  setErr('f-rep',!rep,errs,'代表者名');
+  setErr('f-email',!email,errs,'メールアドレス');
+  setErr('m1',!v('m1'),errs,'メンバー①');
+  setErr('m2',!v('m2'),errs,'メンバー②');
+  config.extraFields.forEach(f=>{
+    const el=document.getElementById('ef-'+f.id);
+    if(f.required&&el&&!el.value.trim()){el.classList.add('error');errs.push(f.label);}else if(el)el.classList.remove('error');
   });
-  save();
-
-  ['f-band','f-rep','f-email','m1','m2','m3','m4','m5','m6'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('f-time').selectedIndex = 0;
-
-  show('toast', '✓ 申し込みを受け付けました！担当者より連絡が届きます。');
-  setTimeout(()=>hide('toast'), 3500);
+  if(errs.length){const em=document.getElementById('err-msg');em.textContent='未入力の必須項目があります：'+errs.join('、');em.style.display='block';return;}
+  document.getElementById('err-msg').style.display='none';
+  const members=[];
+  for(let i=1;i<=config.maxMembers;i++){const val=v('m'+i);if(val)members.push(val);}
+  const extra={};
+  config.extraFields.forEach(f=>{const el=document.getElementById('ef-'+f.id);if(el)extra[f.id]=el.value.trim();});
+  bands.push({id:Date.now(),band,unavail,allfree,rep,email,members,extra,status:'pending',createdAt:new Date().toISOString()});
+  saveData();
+  document.getElementById('f-band').value='';
+  document.getElementById('f-allfree').checked=false;
+  document.getElementById('f-unavail').value='';
+  document.getElementById('unavail-text-wrap').style.display='block';
+  document.getElementById('f-rep').value='';
+  document.getElementById('f-email').value='';
+  for(let i=1;i<=config.maxMembers;i++){const el=document.getElementById('m'+i);if(el)el.value='';}
+  config.extraFields.forEach(f=>{const el=document.getElementById('ef-'+f.id);if(el)el.value='';});
+  const t=document.getElementById('toast');t.style.display='block';
+  setTimeout(()=>t.style.display='none',3500);
 }
 
-// ===== サブタブ =====
-function showSubtab(name) {
-  document.querySelectorAll('.subtab').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-  document.getElementById('subtab-'+name).classList.add('active');
-  event.currentTarget.classList.add('active');
-  if(name==='answers') renderAnswers();
-  if(name==='lottery') renderLotteryResult();
-}
-
-// ===== 回答一覧 =====
-function renderAnswers() {
-  const q  = (document.getElementById('search').value||'').toLowerCase();
-  const fs = document.getElementById('filt-status').value;
-  const filtered = bands.filter(b =>
-    (!q || b.band.toLowerCase().includes(q) || b.rep.toLowerCase().includes(q)) &&
-    (!fs || b.status===fs)
-  );
-
-  document.getElementById('st-total').textContent = bands.length;
-  document.getElementById('st-sel').textContent   = bands.filter(b=>b.status==='selected').length;
-  document.getElementById('st-pend').textContent  = bands.filter(b=>b.status==='pending').length;
-
-  const wrap = document.getElementById('answers-table');
-  if(!filtered.length) {
-    wrap.innerHTML = '<p class="empty">該当する申し込みがありません</p>';
-    return;
-  }
-
-  let html = `<table><thead><tr>
-    <th>#</th><th>バンド名</th><th>希望時間</th><th>代表者</th><th>人数</th><th>状態</th><th></th>
-  </tr></thead><tbody>`;
-
-  filtered.forEach((b,i) => {
-    const badge = b.status==='selected'
-      ? '<span class="badge badge-selected">当選</span>'
-      : b.status==='excluded'
-      ? '<span class="badge badge-excluded">落選</span>'
-      : '<span class="badge badge-pending">未確定</span>';
-    html += `<tr>
-      <td style="color:var(--text-hint);font-size:12px">${i+1}</td>
-      <td><span class="detail-link" onclick="showDetail(${b.id})">${esc(b.band)}</span></td>
-      <td style="font-size:12px">${esc(b.time)}</td>
-      <td>${esc(b.rep)}</td>
-      <td style="font-size:12px">${b.members.length}人</td>
-      <td>${badge}</td>
-      <td><button class="del-btn" onclick="deleteBand(${b.id})" title="削除">×</button></td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
-}
-
-function showDetail(id) {
-  const b = bands.find(x=>x.id===id);
-  if(!b) return;
-  document.getElementById('dp-band').textContent = b.band;
-  document.getElementById('dp-body').innerHTML = `
-    <table style="width:100%;font-size:13px;border-collapse:collapse">
-      <tr><td style="color:var(--text-muted);padding:4px 0 4px;width:130px">希望時間帯</td><td>${esc(b.time)}</td></tr>
-      <tr><td style="color:var(--text-muted);padding:4px 0">代表者名</td><td>${esc(b.rep)}</td></tr>
-      <tr><td style="color:var(--text-muted);padding:4px 0">メールアドレス</td><td><a href="mailto:${esc(b.email)}" style="color:var(--accent)">${esc(b.email)}</a></td></tr>
-      <tr><td style="color:var(--text-muted);padding:4px 0">メンバー（${b.members.length}人）</td><td>${b.members.map(esc).join('　')}</td></tr>
-      <tr><td style="color:var(--text-muted);padding:4px 0">申込日時</td><td>${new Date(b.createdAt).toLocaleString('ja-JP')}</td></tr>
-    </table>`;
-  document.getElementById('detail-panel').style.display = 'block';
-  document.getElementById('detail-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-
-function deleteBand(id) {
-  if(!confirm('このバンドのデータを削除しますか？')) return;
-  bands = bands.filter(b=>b.id!==id);
-  save(); renderAnswers();
-}
-function clearAll() {
-  if(!confirm('全データを削除します。この操作は取り消せません。')) return;
-  bands = []; save(); renderAnswers();
-}
-
-// ===== 抽選 =====
-function runLottery() {
-  if(!bands.length) { alert('申し込みデータがありません。'); return; }
-  const slots = parseInt(document.getElementById('slots').value) || 5;
-  const mode  = document.getElementById('lottery-mode').value;
-
-  bands.forEach(b => b.status='pending');
-  let pool = [...bands];
-
-  if(mode==='random')  pool.sort(()=>Math.random()-0.5);
-  else if(mode==='time')  pool.sort(()=>Math.random()-0.5);
-  else if(mode==='small') pool.sort((a,b)=>a.members.length-b.members.length || Math.random()-0.5);
-  else if(mode==='large') pool.sort((a,b)=>b.members.length-a.members.length || Math.random()-0.5);
-  else if(mode==='first') { /* 申し込み順のまま */ }
-
-  const n = Math.min(slots, pool.length);
-  const winIds = new Set(pool.slice(0,n).map(b=>b.id));
-  bands.forEach(b => { b.status = winIds.has(b.id) ? 'selected' : 'excluded'; });
-  save();
-  renderLotteryResult();
-}
-
-function resetLottery() {
-  if(!confirm('抽選結果をリセットして全員「未確定」に戻しますか？')) return;
-  bands.forEach(b=>b.status='pending');
-  save(); renderLotteryResult();
-}
-
-function renderLotteryResult() {
-  const selected = bands.filter(b=>b.status==='selected');
-  const excluded = bands.filter(b=>b.status==='excluded');
-  const sumBox = document.getElementById('lottery-summary-box');
-  const result = document.getElementById('lottery-result');
-
-  if(!bands.length) {
-    sumBox.style.display='none';
-    result.innerHTML='<p style="color:var(--text-hint);font-size:14px;padding:20px 0">申し込みがまだありません。</p>';
-    return;
-  }
-  if(!selected.length && !excluded.length) {
-    sumBox.style.display='none';
-    result.innerHTML='<p style="color:var(--text-hint);font-size:14px;padding:20px 0">抽選を実行すると結果が表示されます。</p>';
-    return;
-  }
-
-  sumBox.style.display='block';
-  sumBox.textContent = `申し込み ${bands.length}バンド　→　当選 ${selected.length}バンド　/　落選 ${excluded.length}バンド`;
-
-  let html = '';
-  if(selected.length) {
-    html += '<div class="result-label">当選バンド ✓</div><div class="result-card">';
-    selected.forEach((b,i) => {
-      html += `<div class="result-item">
-        <span class="result-num">${i+1}</span>
-        <span class="result-name">${esc(b.band)}</span>
-        <span class="result-rep">${esc(b.rep)}</span>
-        <span class="result-time">${esc(b.time)}</span>
-      </div>`;
-    });
-    html += '</div>';
-  }
-  if(excluded.length) {
-    html += '<div class="result-label" style="margin-top:20px">落選バンド</div><div class="result-card result-excluded">';
-    excluded.forEach((b,i) => {
-      html += `<div class="result-item">
-        <span class="result-num" style="color:var(--text-hint)">${i+1}</span>
-        <span class="result-name" style="color:var(--text-muted)">${esc(b.band)}</span>
-        <span class="result-rep">${esc(b.rep)}</span>
-        <span class="result-time">${esc(b.time)}</span>
-      </div>`;
-    });
-    html += '</div>';
-  }
-  result.innerHTML = html;
-}
-
-// ===== CSV出力 =====
-function exportCSV(type) {
-  const target = type==='selected' ? bands.filter(b=>b.status==='selected') : bands;
-  if(!target.length) { alert('データがありません。'); return; }
-  const header = ['バンド名','希望時間帯','代表者名','メールアドレス','人数','メンバー①','メンバー②','メンバー③','メンバー④','メンバー⑤','メンバー⑥','状態','申込日時'];
-  const rows = target.map(b => [
-    b.band, b.time, b.rep, b.email, b.members.length,
-    ...Array.from({length:6}, (_,i)=>b.members[i]||''),
-    b.status==='selected'?'当選':b.status==='excluded'?'落選':'未確定',
-    new Date(b.createdAt).toLocaleString('ja-JP')
-  ]);
-  const csv = '\uFEFF' + [header, ...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  dl(csv, `acappella_${type}_${yyyymmdd()}.csv`, 'text/csv;charset=utf-8');
-}
-
-function exportJSON() {
-  dl(JSON.stringify(bands, null, 2), `acappella_backup_${yyyymmdd()}.json`, 'application/json');
-}
-function importJSON(e) {
-  const f = e.target.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if(!Array.isArray(data)) throw new Error();
-      if(!confirm(`${data.length}件のデータを読み込みます。現在のデータは上書きされます。`)) return;
-      bands = data; save(); renderAnswers(); alert('読み込み完了！');
-    } catch { alert('JSONファイルの読み込みに失敗しました。'); }
-  };
-  r.readAsText(f);
-  e.target.value='';
-}
-
-// ===== ユーティリティ =====
-function v(id) { return document.getElementById(id).value.trim(); }
-function show(id, text) { const el=document.getElementById(id); if(text) el.textContent=text; el.style.display='block'; }
-function hide(id) { document.getElementById(id).style.display='none'; }
-function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
-function yyyymmdd() { return new Date().toISOString().slice(0,10).replace(/-/g,''); }
-function dl(content, name, type) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content],{type}));
-  a.download = name; a.click();
-}
+function setErr(id,isErr,errs,label){const el=document.getElementById(id);if(!el)return;if(isErr){el.classList.add('error');errs.push(label);}else el.classList.remove('error');}
+function v(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+init();
 </script>
 </body>
 </html>
