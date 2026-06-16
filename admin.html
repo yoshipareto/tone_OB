@@ -1,3 +1,6 @@
+では`admin.html`の全体コードをそのまま出します！
+
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -77,12 +80,12 @@
 
   .lottery-config{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;}
   .lottery-config h3{font-size:15px;font-weight:600;margin-bottom:10px;}
-  .lottery-btns{display:flex;gap:8px;margin-bottom:10px;}
+  .lottery-btns{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
   .lottery-summary{font-size:13px;color:var(--text-muted);padding:10px 14px;background:var(--warning-bg);border-radius:var(--radius);border:1px solid #e8d79a;margin-bottom:12px;}
   .result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
   .result-item{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
   .result-item:last-child{border-bottom:none;}
-  .result-num{font-size:13px;color:var(--text-hint);min-width:24px;font-weight:600;}
+  .result-num{font-size:13px;font-weight:700;color:var(--text-hint);min-width:24px;}
   .result-name{font-size:14px;font-weight:600;flex:1;min-width:100px;}
   .result-rep{font-size:12px;color:var(--text-muted);}
   .result-avail{font-size:12px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -118,6 +121,21 @@
   .export-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:14px;}
   .export-section h3{font-size:15px;font-weight:600;margin-bottom:6px;}
   .export-section p{font-size:13px;color:var(--text-muted);margin-bottom:14px;}
+
+  /* タイムテーブル */
+  .tt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+  .tt-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:grab;user-select:none;}
+  .tt-row:last-child{border-bottom:none;}
+  .tt-row:hover{background:var(--bg);}
+  .tt-row.dragging{opacity:.4;}
+  .tt-row.drag-over{border-top:2px solid var(--accent);}
+  .tt-row.warn{background:#fff8f6;border-left:3px solid var(--danger);}
+  .tt-num{font-size:13px;font-weight:700;color:var(--text-hint);min-width:28px;text-align:center;}
+  .tt-name{font-size:14px;font-weight:600;flex:1;}
+  .tt-members{font-size:12px;color:var(--text-muted);flex:2;}
+  .tt-warn-label{font-size:11px;font-weight:600;color:var(--danger);background:var(--danger-bg);padding:2px 8px;border-radius:99px;white-space:nowrap;}
+  .tt-drag-handle{color:var(--text-hint);font-size:18px;cursor:grab;padding:0 4px;}
+  .tt-empty{text-align:center;padding:48px 0;color:var(--text-hint);font-size:14px;}
 </style>
 </head>
 <body>
@@ -141,12 +159,13 @@
 
   <div class="admin-header">
     <h2>運営ダッシュボード</h2>
-    <p>申し込みの確認・抽選・フォーム設定・データ出力ができます。</p>
+    <p>申し込みの確認・抽選・タイムテーブル・フォーム設定・データ出力ができます。</p>
   </div>
 
   <div class="tabs">
     <button class="tab active" onclick="showSubtab('answers',this)">回答一覧</button>
     <button class="tab" onclick="showSubtab('lottery',this)">抽選</button>
+    <button class="tab" onclick="showSubtab('timetable',this)">タイムテーブル</button>
     <button class="tab" onclick="showSubtab('settings',this)">フォーム設定</button>
     <button class="tab" onclick="showSubtab('export',this)">データ出力</button>
   </div>
@@ -192,6 +211,20 @@
     </div>
     <div id="lottery-summary-box" style="display:none" class="lottery-summary"></div>
     <div id="lottery-result"></div>
+  </div>
+
+  <!-- タイムテーブル -->
+  <div class="subtab" id="subtab-timetable">
+    <div class="lottery-config">
+      <h3>タイムテーブル</h3>
+      <div class="lottery-btns">
+        <button class="btn primary" onclick="autoArrange()">✦ メンバー被りを避けて自動整列</button>
+        <button class="btn" onclick="resetTimetable()">↺ 当選順に戻す</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted)">ドラッグ＆ドロップで順番を入れ替えられます。メンバーが連続する箇所は警告が表示されます。</p>
+    </div>
+    <div id="tt-warning-box" style="display:none;margin-bottom:12px;padding:10px 14px;background:var(--danger-bg);color:var(--danger);border:1px solid #f0b8b2;border-radius:var(--radius);font-size:13px;"></div>
+    <div id="tt-body"></div>
   </div>
 
   <!-- フォーム設定 -->
@@ -247,6 +280,7 @@
         <button class="btn primary" onclick="exportCSV('all')">全データをCSVで保存</button>
         <button class="btn success-btn" onclick="exportCSV('selected')">当選者のみCSVで保存</button>
         <button class="btn" style="color:var(--warning);border-color:#e8d79a;" onclick="exportCSV('ranked')">順位順でCSVで保存</button>
+        <button class="btn" style="color:var(--accent);border-color:var(--accent);" onclick="exportTimetableCSV()">タイムテーブルをCSVで保存</button>
       </div>
     </div>
     <div class="export-section">
@@ -268,6 +302,7 @@ let bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
 function saveData(){try{localStorage.setItem('acappella_v2_bands',JSON.stringify(bands));}catch(e){}}
 function saveConfig(){try{localStorage.setItem('acappella_v2_config',JSON.stringify(config));}catch(e){}}
 
+// パスワード
 function checkPw(){
   if(document.getElementById('pw-input').value===config.password){
     document.getElementById('pw-overlay').style.display='none';
@@ -278,6 +313,7 @@ function checkPw(){
   }
 }
 
+// サブタブ
 function showSubtab(name,btn){
   document.querySelectorAll('.subtab').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
@@ -285,10 +321,11 @@ function showSubtab(name,btn){
   if(btn)btn.classList.add('active');
   if(name==='answers')renderAnswers();
   if(name==='lottery')renderLotteryResult();
+  if(name==='timetable')initTimetable();
   if(name==='settings')renderSettingsPanel();
 }
 
-// 回答一覧
+// ===== 回答一覧 =====
 function renderAnswers(){
   const q=(document.getElementById('search').value||'').toLowerCase();
   const fs=document.getElementById('filt-status').value;
@@ -299,13 +336,12 @@ function renderAnswers(){
   document.getElementById('st-pend').textContent=bands.filter(b=>!b.status||b.status==='pending').length;
   const wrap=document.getElementById('answers-table');
   if(!filtered.length){wrap.innerHTML='<p class="empty">該当する申し込みがありません</p>';return;}
-  let html=`<table><thead><tr><th>順位</th><th>バンド名</th><th>出演不可時間</th><th>代表者</th><th>人数</th><th>状態</th><th></th></tr></thead><tbody>`;
   const sorted=[...filtered].sort((a,b)=>(a.rank||9999)-(b.rank||9999));
+  let html=`<table><thead><tr><th>順位</th><th>バンド名</th><th>出演不可時間</th><th>代表者</th><th>人数</th><th>状態</th><th></th></tr></thead><tbody>`;
   sorted.forEach(b=>{
     const badge=b.status==='selected'?'<span class="badge badge-selected">当選</span>':b.status==='substitute'?'<span class="badge badge-substitute">補欠</span>':b.status==='excluded'?'<span class="badge badge-excluded">落選</span>':'<span class="badge badge-pending">未確定</span>';
-    const avail=b.allfree?'<span style="color:var(--success);font-size:12px">全日可</span>':`<span style="font-size:12px;color:var(--text-muted)">${esc(b.unavail).substring(0,20)}${(b.unavail||'').length>20?'…':''}</span>`;
-    const rank=b.rank?`<span style="font-weight:600">${b.rank}</span>`:'—';
-    html+=`<tr><td style="font-size:12px;color:var(--text-hint)">${rank}</td><td><span class="detail-link" onclick="showDetail(${b.id})">${esc(b.band)}</span></td><td>${avail}</td><td>${esc(b.rep)}</td><td style="font-size:12px">${b.members.length}人</td><td>${badge}</td><td><button class="del-btn" onclick="deleteBand(${b.id})">×</button></td></tr>`;
+    const avail=b.allfree?'<span style="color:var(--success);font-size:12px">全日可</span>':`<span style="font-size:12px;color:var(--text-muted)">${esc(b.unavail||'').substring(0,20)}${(b.unavail||'').length>20?'…':''}</span>`;
+    html+=`<tr><td style="font-size:12px;color:var(--text-hint)">${b.rank?`<span style="font-weight:600">${b.rank}</span>`:'—'}</td><td><span class="detail-link" onclick="showDetail(${b.id})">${esc(b.band)}</span></td><td>${avail}</td><td>${esc(b.rep)}</td><td style="font-size:12px">${b.members.length}人</td><td>${badge}</td><td><button class="del-btn" onclick="deleteBand(${b.id})">×</button></td></tr>`;
   });
   html+='</tbody></table>';
   wrap.innerHTML=html;
@@ -316,8 +352,7 @@ function showDetail(id){
   const unavailStr=b.allfree?'全日出演可':(b.unavail||'記入なし');
   let extraHtml='';
   config.extraFields.forEach(f=>{
-    const val=b.extra&&b.extra[f.id]?esc(b.extra[f.id]):'—';
-    extraHtml+=`<tr><td style="color:var(--text-muted);padding:4px 0;width:140px">${esc(f.label)}</td><td>${val}</td></tr>`;
+    extraHtml+=`<tr><td style="color:var(--text-muted);padding:4px 0;width:140px">${esc(f.label)}</td><td>${b.extra&&b.extra[f.id]?esc(b.extra[f.id]):'—'}</td></tr>`;
   });
   document.getElementById('dp-band').textContent=b.band;
   document.getElementById('dp-body').innerHTML=`<table style="width:100%;font-size:13px;border-collapse:collapse">
@@ -337,7 +372,7 @@ function showDetail(id){
 function deleteBand(id){if(!confirm('このバンドのデータを削除しますか？'))return;bands=bands.filter(b=>b.id!==id);saveData();renderAnswers();}
 function clearAll(){if(!confirm('全データを削除します。この操作は取り消せません。'))return;bands=[];saveData();renderAnswers();}
 
-// 抽選
+// ===== 抽選 =====
 function runLottery(){
   if(!bands.length){alert('申し込みデータがありません。');return;}
   if(bands.some(b=>b.rank)&&!confirm('現在の順位をリセットして再抽選しますか？'))return;
@@ -365,23 +400,13 @@ function renderLotteryResult(){
   const sumBox=document.getElementById('lottery-summary-box');
   const result=document.getElementById('lottery-result');
   const ranked=bands.filter(b=>b.rank).sort((a,b)=>a.rank-b.rank);
-  const unranked=bands.filter(b=>!b.rank);
-  if(!bands.length){
-    sumBox.style.display='none';
-    result.innerHTML='<p style="color:var(--text-hint);font-size:14px;padding:20px 0">申し込みがまだありません。</p>';
-    return;
-  }
-  if(!ranked.length){
-    sumBox.style.display='none';
-    result.innerHTML='<p style="color:var(--text-hint);font-size:14px;padding:20px 0">「ランダムに順位をつける」を実行すると結果が表示されます。</p>';
-    return;
-  }
+  if(!bands.length){sumBox.style.display='none';result.innerHTML='<p style="color:var(--text-hint);font-size:14px;padding:20px 0">申し込みがまだありません。</p>';return;}
+  if(!ranked.length){sumBox.style.display='none';result.innerHTML='<p style="color:var(--text-hint);font-size:14px;padding:20px 0">「ランダムに順位をつける」を実行すると結果が表示されます。</p>';return;}
   const sel=bands.filter(b=>b.status==='selected').length;
   const sub=bands.filter(b=>b.status==='substitute').length;
   const exc=bands.filter(b=>b.status==='excluded').length;
-  const pend=bands.length-sel-sub-exc;
   sumBox.style.display='block';
-  sumBox.textContent=`全${bands.length}バンド　当選 ${sel} / 補欠 ${sub} / 落選 ${exc} / 未確定 ${pend}`;
+  sumBox.textContent=`全${bands.length}バンド　当選 ${sel} / 補欠 ${sub} / 落選 ${exc} / 未確定 ${bands.length-sel-sub-exc}`;
   let subCount=0;
   let html='<div class="result-card">';
   ranked.forEach(b=>{
@@ -401,13 +426,124 @@ function renderLotteryResult(){
     </div>`;
   });
   html+='</div>';
-  if(unranked.length){
-    html+=`<p style="font-size:12px;color:var(--text-hint);margin-top:12px">※ 順位未割当のバンドが${unranked.length}件あります（再抽選で反映されます）</p>`;
-  }
+  const unranked=bands.filter(b=>!b.rank);
+  if(unranked.length)html+=`<p style="font-size:12px;color:var(--text-hint);margin-top:12px">※ 順位未割当のバンドが${unranked.length}件あります</p>`;
   result.innerHTML=html;
 }
 
-// フォーム設定
+// ===== タイムテーブル =====
+let ttOrder=[];
+let dragSrcIdx=null;
+
+function initTimetable(){
+  const selected=bands.filter(b=>b.status==='selected');
+  const selectedIds=selected.map(b=>b.id);
+  ttOrder=ttOrder.filter(id=>selectedIds.includes(id));
+  selectedIds.forEach(id=>{if(!ttOrder.includes(id))ttOrder.push(id);});
+  renderTimetable();
+}
+
+function resetTimetable(){
+  ttOrder=bands.filter(b=>b.status==='selected').map(b=>b.id);
+  renderTimetable();
+}
+
+function autoArrange(){
+  const selected=bands.filter(b=>b.status==='selected');
+  if(!selected.length)return;
+  const remaining=[...selected];
+  const arranged=[];
+  arranged.push(remaining.splice(Math.floor(Math.random()*remaining.length),1)[0]);
+  while(remaining.length){
+    const last1=arranged[arranged.length-1];
+    const last2=arranged.length>=2?arranged[arranged.length-2]:null;
+    const prevMembers=new Set([...last1.members,...(last2?last2.members:[])]);
+    let bestIdx=0,bestScore=Infinity;
+    remaining.forEach((b,i)=>{
+      const overlap=b.members.filter(m=>prevMembers.has(m)).length;
+      if(overlap<bestScore){bestScore=overlap;bestIdx=i;}
+    });
+    arranged.push(remaining.splice(bestIdx,1)[0]);
+  }
+  ttOrder=arranged.map(b=>b.id);
+  renderTimetable();
+}
+
+function getConflicts(order){
+  const conflicts=new Set();
+  for(let i=0;i<order.length-1;i++){
+    const a=bands.find(b=>b.id===order[i]);
+    const b=bands.find(b=>b.id===order[i+1]);
+    if(!a||!b)continue;
+    if(a.members.some(m=>b.members.includes(m))){conflicts.add(i);conflicts.add(i+1);}
+  }
+  return conflicts;
+}
+
+function getConflictDetails(order){
+  const details=[];
+  for(let i=0;i<order.length-1;i++){
+    const a=bands.find(b=>b.id===order[i]);
+    const b=bands.find(b=>b.id===order[i+1]);
+    if(!a||!b)continue;
+    const overlap=a.members.filter(m=>b.members.includes(m));
+    if(overlap.length)details.push(`${i+1}番目「${a.band}」と${i+2}番目「${b.band}」に共通メンバーがいます（${overlap.join('、')}）`);
+  }
+  return details;
+}
+
+function renderTimetable(){
+  const selected=bands.filter(b=>b.status==='selected');
+  const body=document.getElementById('tt-body');
+  const warnBox=document.getElementById('tt-warning-box');
+  if(!selected.length){
+    body.innerHTML='<p class="tt-empty">当選バンドがまだいません。抽選タブで当選を設定してください。</p>';
+    warnBox.style.display='none';
+    return;
+  }
+  const conflicts=getConflicts(ttOrder);
+  const details=getConflictDetails(ttOrder);
+  if(details.length){
+    warnBox.style.display='block';
+    warnBox.innerHTML=`<strong>⚠ メンバー被りの警告 ${details.length}件</strong><br>${details.map(d=>'・'+d).join('<br>')}`;
+  }else{
+    warnBox.style.display='none';
+  }
+  let html='<div class="tt-card">';
+  ttOrder.forEach((id,i)=>{
+    const b=bands.find(x=>x.id===id);if(!b)return;
+    const isWarn=conflicts.has(i);
+    html+=`<div class="tt-row${isWarn?' warn':''}" draggable="true" data-idx="${i}"
+      ondragstart="onDragStart(event,${i})"
+      ondragover="onDragOver(event)"
+      ondrop="onDrop(event,${i})"
+      ondragend="onDragEnd(event)"
+      ondragleave="onDragLeave(event)">
+      <span class="tt-drag-handle">⠿</span>
+      <span class="tt-num">${i+1}</span>
+      <span class="tt-name">${esc(b.band)}</span>
+      <span class="tt-members">${b.members.map(esc).join('　')}</span>
+      ${isWarn?'<span class="tt-warn-label">⚠ 被り</span>':''}
+    </div>`;
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+
+function onDragStart(e,idx){dragSrcIdx=idx;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function onDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over');}
+function onDragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function onDrop(e,idx){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  if(dragSrcIdx===null||dragSrcIdx===idx)return;
+  const moved=ttOrder.splice(dragSrcIdx,1)[0];
+  ttOrder.splice(idx,0,moved);
+  dragSrcIdx=null;
+  renderTimetable();
+}
+function onDragEnd(e){e.currentTarget.classList.remove('dragging');dragSrcIdx=null;}
+
+// ===== フォーム設定 =====
 function renderSettingsPanel(){
   document.getElementById('cfg-title').value=config.title;
   document.getElementById('cfg-pw').value='';
@@ -461,11 +597,11 @@ function saveSettings(){
   setTimeout(()=>saved.style.display='none',3000);
 }
 
-// CSV出力
+// ===== データ出力 =====
 function exportCSV(type){
   let target;
-  if(type==='selected') target=bands.filter(b=>b.status==='selected');
-  else if(type==='ranked') target=[...bands].filter(b=>b.rank).sort((a,b)=>a.rank-b.rank);
+  if(type==='selected')target=bands.filter(b=>b.status==='selected');
+  else if(type==='ranked')target=[...bands].filter(b=>b.rank).sort((a,b)=>a.rank-b.rank);
   else target=bands;
   if(!target.length){alert('データがありません。');return;}
   const header=['順位','バンド名','出演できない時間帯','全日出演可','代表者名','メールアドレス','メンバー人数',
@@ -482,6 +618,18 @@ function exportCSV(type){
   const csv='\uFEFF'+[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   dl(csv,`acappella_${type}_${yyyymmdd()}.csv`,'text/csv;charset=utf-8');
 }
+
+function exportTimetableCSV(){
+  if(!ttOrder.length){alert('タイムテーブルがまだ作成されていません。');return;}
+  const header=['出演順','バンド名','代表者','メンバー','出演できない時間帯'];
+  const rows=ttOrder.map((id,i)=>{
+    const b=bands.find(x=>x.id===id);if(!b)return null;
+    return[i+1,b.band,b.rep,b.members.join('・'),b.allfree?'全日可':(b.unavail||'')];
+  }).filter(Boolean);
+  const csv='\uFEFF'+[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl(csv,`timetable_${yyyymmdd()}.csv`,'text/csv;charset=utf-8');
+}
+
 function exportJSON(){dl(JSON.stringify({config,bands},null,2),`acappella_backup_${yyyymmdd()}.json`,'application/json');}
 function importJSON(e){
   const f=e.target.files[0];if(!f)return;
@@ -505,3 +653,6 @@ function dl(content,name,type){const a=document.createElement('a');a.href=URL.cr
 </script>
 </body>
 </html>
+```
+
+丸ごと貼り替えてください。タイムテーブルCSV出力ボタンも追加してあります。
