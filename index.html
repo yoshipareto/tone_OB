@@ -47,7 +47,7 @@
 </head>
 <body>
 <header>
-  <div class="logo">🎵 <span id="header-title">アカペラ</span>発表会</div>
+  <div class="logo">🎵 <span id="header-title">OBOGライブ~延長戦~</span></div>
 </header>
 <main>
   <div class="form-header">
@@ -76,8 +76,8 @@
   <div class="section-label">代表者情報</div>
   <div class="row2">
     <div class="field">
-      <label>代表者名 <span class="req">*</span></label>
-      <input type="text" id="f-rep" placeholder="山田 太郎" />
+      <label>代表者名（トーンネーム） <span class="req">*</span></label>
+      <input type="text" id="f-rep" placeholder="あんころ" />
     </div>
     <div class="field">
       <label>代表者メールアドレス <span class="req">*</span></label>
@@ -85,13 +85,13 @@
     </div>
   </div>
 
-  <div class="section-label">バンドメンバー</div>
-  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">①②は必須、③以降は任意です。</p>
+  <div class="section-label">バンドメンバー（記入例：21あんころ）</div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;"></p>
   <div class="member-grid" id="member-grid"></div>
   <div id="extra-fields-form"></div>
 
   <button class="submit-btn" onclick="submitForm()">申し込む →</button>
-  <div class="toast" id="toast">✓ 申し込みを受け付けました！担当者より連絡が届きます。</div>
+  <div class="toast" id="toast">✓ 申し込みを受け付けました！</div>
   <div class="error-msg" id="err-msg"></div>
 </main>
 <script>
