@@ -113,7 +113,7 @@ function renderMemberFields(){
   let html='';
   for(let i=1;i<=config.maxMembers;i++){
     const req=i<=2;
-    html+=`<div class="field"><label>${nums[i-1]} トーンネーム（21あんころ） ${req?'<span class="req">*</span>':'<span class="hint">任意</span>'}</label><input type="text" id="m${i}" placeholder="${req?'メンバー'+nums[i-1]:''}" /></div>`;
+    html+=`<div class="field"><label>${nums[i-1]} トーンネーム ${req?'<span class="req">*</span>':'<span class="hint">任意</span>'}</label><input type="text" id="m${i}" placeholder="${req?'21あんころ'}" /></div>`;
   }
   document.getElementById('member-grid').innerHTML=html;
 }
