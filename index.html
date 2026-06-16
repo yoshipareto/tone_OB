@@ -94,12 +94,14 @@
   <div class="error-msg" id="err-msg"></div>
 </main>
 <script>
-const DEFAULT_CONFIG={title:'OBOGライブ~延長戦~',password:'admin1234',maxMembers:8,extraFields:[]};
+// 運営ダッシュボードと完全に一致させた設定
+const DEFAULT_CONFIG={title:'OBOGライブ~延長戦~',maxMembers:8,extraFields:[]};
 let config=Object.assign({},DEFAULT_CONFIG,JSON.parse(localStorage.getItem('acappella_v2_config')||'{}'));
 let bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
 function saveData(){try{localStorage.setItem('acappella_v2_bands',JSON.stringify(bands));}catch(e){}}
 
 function init(){
+  document.getElementById('header-title').textContent = config.title;
   renderMemberFields();
   renderExtraFieldsForm();
 }
@@ -153,8 +155,12 @@ function submitForm(){
   for(let i=1;i<=config.maxMembers;i++){const val=v('m'+i);if(val)members.push(val);}
   const extra={};
   config.extraFields.forEach(f=>{const el=document.getElementById('ef-'+f.id);if(el)extra[f.id]=el.value.trim();});
+  
+  // 最新のバンドデータを再取得してから追加（データの上書き防止）
+  bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
   bands.push({id:Date.now(),band,unavail,allfree,rep,email,members,extra,status:'pending',createdAt:new Date().toISOString()});
   saveData();
+
   document.getElementById('f-band').value='';
   document.getElementById('f-allfree').checked=false;
   document.getElementById('f-unavail').value='';
