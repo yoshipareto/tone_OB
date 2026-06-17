@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>運営ダッシュボード</title>
+<style>
+  :root{
+    --bg:#fafaf8;--surface:#ffffff;--border:#e4e2dc;
+    --text:#1a1917;--text-muted:#6b6860;--text-hint:#a09d96;
+    --accent:#2d5be3;--accent-bg:#eef2fd;
+    --success:#1a7a4a;--success-bg:#e8f7ef;
+    --danger:#c0392b;--danger-bg:#fdf0ee;
+    --warning:#d97706;--warning-bg:#fdf6e3;
+    --radius:8px;--radius-lg:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;height:56px;}
+  .logo{font-size:15px;font-weight:600;letter-spacing:-0.01em;}
+  .logo span{color:var(--accent);}
+  .form-link{font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:5px 14px;border-radius:99px;}
+  .form-link:hover{background:var(--accent-bg);}
+  main{max-width:760px;margin:0 auto;padding:40px 24px 80px;}
+
+  .admin-header{margin-bottom:24px;}
+  .admin-header h2{font-size:22px;font-weight:700;margin-bottom:4px;letter-spacing:-0.02em;}
+  .admin-header p{font-size:13px;color:var(--text-muted);}
+  .tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px;overflow-x:auto;}
+  .tab{padding:10px 16px;border:none;background:none;font-size:14px;font-family:inherit;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+  .tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+  .subtab{display:none;}
+  .subtab.active{display:block;}
+
+  .btn{padding:8px 14px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);font-size:13px;font-family:inherit;cursor:pointer;color:var(--text);white-space:nowrap;}
+  .btn:hover{background:var(--bg);}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .btn.primary:hover{opacity:.88;}
+  .btn.danger{color:var(--danger);border-color:#f0b8b2;}
+  .btn.danger:hover{background:var(--danger-bg);}
+  .btn.success-btn{background:var(--success);color:#fff;border-color:var(--success);}
+  .ctrl-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .ctrl-row input[type=text]{flex:1;min-width:140px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--surface);}
+  .ctrl-row select{padding:8px 28px 8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--surface);appearance:none;cursor:pointer;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+  @media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr);}}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+  .stat-label{font-size:12px;color:var(--text-muted);margin-bottom:4px;}
+  .stat-value{font-size:26px;font-weight:700;letter-spacing:-0.02em;}
+
+  .table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:400px;}
+  th{text-align:left;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-muted);white-space:nowrap;}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--bg);}
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;}
+  .badge-pending{background:#f0efea;color:var(--text-muted);}
+  .badge-selected{background:var(--success-bg);color:var(--success);}
+  .badge-substitute{background:var(--warning-bg);color:var(--warning);}
+  .badge-excluded{background:var(--danger-bg);color:var(--danger);}
+  .del-btn{background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:18px;padding:2px 6px;border-radius:4px;}
+  .del-btn:hover{color:var(--danger);background:var(--danger-bg);}
+  .empty{text-align:center;padding:48px 0;color:var(--text-hint);font-size:14px;}
+  .detail-link{color:var(--accent);cursor:pointer;text-decoration:underline;font-size:13px;}
+  .detail-panel{display:none;margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
+  .detail-panel h3{font-size:16px;font-weight:700;}
+
+  .lottery-config{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;}
+  .lottery-config h3{font-size:15px;font-weight:600;margin-bottom:10px;}
+  .lottery-btns{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .lottery-summary{font-size:13px;color:var(--text-muted);padding:10px 14px;background:var(--warning-bg);border-radius:var(--radius);border:1px solid #e8d79a;margin-bottom:12px;}
+  .result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+  .result-item{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .result-item:last-child{border-bottom:none;}
+  .result-num{font-size:13px;font-weight:700;color:var(--text-hint);min-width:24px;}
+  .result-name{font-size:14px;font-weight:600;flex:1;min-width:100px;}
+  .result-rep{font-size:12px;color:var(--text-muted);}
+  .result-avail{font-size:12px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .status-btns{display:flex;gap:4px;flex-shrink:0;}
+  .st-btn{font-size:11px;padding:3px 9px;border-radius:99px;border:1px solid var(--border);cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text-muted);}
+  .st-btn.on-selected{background:var(--success);color:#fff;border-color:var(--success);}
+  .st-btn.on-substitute{background:var(--warning);color:#fff;border-color:var(--warning);}
+  .st-btn.on-excluded{background:var(--danger);color:#fff;border-color:var(--danger);}
+
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+  @media(max-width:560px){.settings-grid{grid-template-columns:1fr;}}
+  .settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;}
+  .settings-card h3{font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;}
+  .settings-field{margin-bottom:12px;}
+  .settings-field label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;}
+  .settings-field input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);}
+  .settings-field input:focus{outline:none;border-color:var(--accent);}
+  .field-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+  .field-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);}
+  .field-item .fname{font-size:13px;flex:1;}
+  .req-toggle{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--border);cursor:pointer;font-family:inherit;background:var(--surface);}
+  .req-toggle.on{background:var(--danger-bg);color:var(--danger);border-color:#f0b8b2;}
+  .req-toggle.off{background:var(--bg);color:var(--text-muted);}
+  .add-field-row{display:flex;gap:6px;margin-top:4px;}
+  .add-field-row input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;background:var(--surface);}
+  .add-field-row input:focus{outline:none;border-color:var(--accent);}
+  .preview-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+  .preview-field{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text-hint);margin-bottom:5px;}
+  .save-settings-btn{width:100%;margin-top:4px;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;grid-column:1/-1;}
+  .save-settings-btn:hover{opacity:.88;}
+  .settings-saved{display:none;padding:10px 14px;background:var(--success-bg);color:var(--success);border:1px solid #a8dfc0;border-radius:var(--radius);font-size:13px;margin-top:4px;grid-column:1/-1;}
+
+  .export-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:14px;}
+  .export-section h3{font-size:15px;font-weight:600;margin-bottom:6px;}
+  .export-section p{font-size:13px;color:var(--text-muted);margin-bottom:14px;}
+
+  /* タイムテーブル */
+  .tt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+  .tt-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:grab;user-select:none;}
+  .tt-row:last-child{border-bottom:none;}
+  .tt-row:hover{background:var(--bg);}
+  .tt-row.dragging{opacity:.4;}
+  .tt-row.drag-over{border-top:2px solid var(--accent);}
+  .tt-row.warn{background:#fff8f6;border-left:3px solid var(--danger);}
+  .tt-num{font-size:13px;font-weight:700;color:var(--text-hint);min-width:28px;text-align:center;}
+  .tt-name{font-size:14px;font-weight:600;flex:1;}
+  .tt-members{font-size:12px;color:var(--text-muted);flex:2;}
+  .tt-warn-label{font-size:11px;font-weight:600;color:var(--danger);background:var(--danger-bg);padding:2px 8px;border-radius:99px;white-space:nowrap;}
+  .tt-drag-handle{color:var(--text-hint);font-size:18px;cursor:grab;padding:0 4px;}
+  .tt-empty{text-align:center;padding:48px 0;color:var(--text-hint);font-size:14px;}
+
+  /* メンバー一覧 */
+  .member-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+  @media(max-width:480px){.member-stats{grid-template-columns:repeat(2,1fr);}}
+  .band-pills{display:flex;flex-wrap:wrap;gap:4px;}
+  .band-pill{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--accent-bg);color:var(--accent);border:1px solid #c5d4f8;}
+  .band-pill.selected{background:var(--success-bg);color:var(--success);border-color:#a8dfc0;}
+  .year-group{margin-bottom:24px;}
+  .year-heading{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-hint);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎵 <span id="header-title">OBOGライブ~延長戦~</span> — 運営</div>
+  <a href="index.html" class="form-link">← 申し込みフォームへ</a>
+</header>
+
+<main>
+  <div class="admin-header">
+    <h2>運営ダッシュボード</h2>
+    <p>申し込みの確認・抽選・タイムテーブル・メンバー一覧・フォーム設定・データ出力ができます。</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showSubtab('answers',this)">回答一覧</button>
+    <button class="tab" onclick="showSubtab('lottery',this)">抽選</button>
+    <button class="tab" onclick="showSubtab('timetable',this)">タイムテーブル</button>
+    <button class="tab" onclick="showSubtab('members',this)">メンバー一覧</button>
+    <button class="tab" onclick="showSubtab('settings',this)">フォーム設定</button>
+    <button class="tab" onclick="showSubtab('export',this)">データ出力</button>
+  </div>
+
+  <!-- 回答一覧 -->
+  <div class="subtab active" id="subtab-answers">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">申し込み総数</div><div class="stat-value" style="color:var(--accent)" id="st-total">0</div></div>
+      <div class="stat"><div class="stat-label">当選</div><div class="stat-value" style="color:var(--success)" id="st-sel">0</div></div>
+      <div class="stat"><div class="stat-label">補欠</div><div class="stat-value" style="color:var(--warning)" id="st-sub">0</div></div>
+      <div class="stat"><div class="stat-label">未確定</div><div class="stat-value" id="st-pend">0</div></div>
+    </div>
+    <div class="ctrl-row">
+      <input type="text" id="search" placeholder="バンド名・代表者で検索…" oninput="renderAnswers()" />
+      <select id="filt-status" onchange="renderAnswers()">
+        <option value="">すべて</option>
+        <option value="pending">未確定</option>
+        <option value="selected">当選</option>
+        <option value="substitute">補欠</option>
+        <option value="excluded">落選</option>
+      </select>
+      <button class="btn danger" onclick="clearAll()">全削除</button>
+    </div>
+    <div class="table-wrap" id="answers-table"><p class="empty">申し込みがまだありません</p></div>
+    <div class="detail-panel" id="detail-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h3 id="dp-band"></h3>
+        <button class="btn" onclick="document.getElementById('detail-panel').style.display='none'">✕ 閉じる</button>
+      </div>
+      <div id="dp-body" style="font-size:13px;line-height:2;"></div>
+    </div>
+  </div>
+
+  <!-- 抽選 -->
+  <div class="subtab" id="subtab-lottery">
+    <div class="lottery-config">
+      <h3>抽選 — ランダム順位付け</h3>
+      <div class="lottery-btns">
+        <button class="btn primary" onclick="runLottery()">▶ ランダムに順位をつける</button>
+        <button class="btn" onclick="resetLottery()">↺ リセット</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted)">実行するたびに順位がシャッフルされます。順位確定後、各バンドの当落を手動で設定してください。</p>
+    </div>
+    <div id="lottery-summary-box" style="display:none" class="lottery-summary"></div>
+    <div id="lottery-result"></div>
+  </div>
+
+  <!-- タイムテーブル -->
+  <div class="subtab" id="subtab-timetable">
+    <div class="lottery-config">
+      <h3>タイムテーブル</h3>
+      <div class="lottery-btns">
+        <button class="btn primary" onclick="autoArrange()">✦ メンバー被りを避けて自動整列</button>
+        <button class="btn" onclick="resetTimetable()">↺ 当選順に戻す</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted)">ドラッグ＆ドロップで順番を入れ替えられます。メンバーが連続する箇所は警告が表示されます。</p>
+    </div>
+    <div id="tt-warning-box" style="display:none;margin-bottom:12px;padding:10px 14px;background:var(--danger-bg);color:var(--danger);border:1px solid #f0b8b2;border-radius:var(--radius);font-size:13px;"></div>
+    <div id="tt-body"></div>
+  </div>
+
+  <!-- メンバー一覧 -->
+  <div class="subtab" id="subtab-members">
+    <div class="member-stats" id="member-stats-row">
+      <div class="stat"><div class="stat-label">ユニーク人数</div><div class="stat-value" style="color:var(--accent)" id="ms-unique">0</div></div>
+      <div class="stat"><div class="stat-label">複数バンド出演</div><div class="stat-value" style="color:var(--warning)" id="ms-multi">0</div></div>
+      <div class="stat"><div class="stat-label">対象バンド数</div><div class="stat-value" id="ms-bands">0</div></div>
+    </div>
+    <div class="ctrl-row">
+      <select id="member-filter" onchange="renderMembers()">
+        <option value="all">全申し込みから集計</option>
+        <option value="selected">当選バンドのみ</option>
+      </select>
+      <input type="text" id="member-search" placeholder="名前で検索…" oninput="renderMembers()" />
+    </div>
+    <div id="members-body"></div>
+  </div>
+
+  <!-- フォーム設定 -->
+  <div class="subtab" id="subtab-settings">
+    <div class="settings-grid">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="settings-card">
+          <h3>基本情報</h3>
+          <div class="settings-field">
+            <label>発表会タイトル</label>
+            <input type="text" id="cfg-title" placeholder="OBOGライブ~延長戦~" />
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>メンバー人数上限</h3>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;color:var(--text-muted)">最大</span>
+            <input type="number" id="cfg-maxmembers" value="8" min="1" max="20" style="width:70px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;font-family:inherit;" oninput="renderPreview()" />
+            <span style="font-size:13px;color:var(--text-muted)">人まで</span>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>追加の質問項目</h3>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">バンド名・代表者・メンバー以外に追加したい質問を設定できます。</p>
+          <div class="field-list" id="extra-field-list"></div>
+          <div class="add-field-row">
+            <input type="text" id="new-field-input" placeholder="例：演奏予定曲" onkeydown="if(event.key==='Enter')addExtraField()" />
+            <button class="btn" onclick="addExtraField()">追加</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="settings-card">
+          <h3>フォームプレビュー</h3>
+          <div class="preview-box" id="preview-fields"></div>
+        </div>
+      </div>
+      <button class="save-settings-btn" onclick="saveSettings()">設定を保存してフォームに反映する</button>
+      <div class="settings-saved" id="settings-saved">✓ 設定を保存しました！</div>
+    </div>
+  </div>
+
+  <!-- データ出力 -->
+  <div class="subtab" id="subtab-export">
+    <div class="export-section">
+      <h3>CSVダウンロード</h3>
+      <p>申し込みデータをCSV形式でダウンロードできます。ExcelやGoogleスプレッドシートで開けます。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn primary" onclick="exportCSV('all')">全データをCSVで保存</button>
+        <button class="btn success-btn" onclick="exportCSV('selected')">当選者のみCSVで保存</button>
+        <button class="btn" style="color:var(--warning);border-color:#e8d79a;" onclick="exportCSV('ranked')">順位順でCSVで保存</button>
+        <button class="btn" style="color:var(--accent);border-color:var(--accent);" onclick="exportTimetableCSV()">タイムテーブルをCSVで保存</button>
+        <button class="btn" onclick="exportMembersCSV()">メンバー一覧をCSVで保存</button>
+      </div>
+    </div>
+    <div class="export-section">
+      <h3>Googleフォーム CSVインポート</h3>
+      <p>GoogleスプレッドシートからダウンロードしたスプレッドシートのCSVファイルを読み込みます。<strong>既存データに追記</strong>されます（重複は自動でスキップ）。</p>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">列マッピング設定（Googleフォームの列名を入力）</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
+          <div><label style="font-size:11px;color:var(--text-hint)">バンド名の列</label><input type="text" id="col-band" value="バンド名" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;" /></div>
+          <div><label style="font-size:11px;color:var(--text-hint)">出演不可時間の列</label><input type="text" id="col-unavail" value="出演できない時間帯" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;" /></div>
+          <div><label style="font-size:11px;color:var(--text-hint)">全日出演可チェックの列</label><input type="text" id="col-allfree" value="全日出演可（時間帯の制約なし）" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;" /></div>
+          <div><label style="font-size:11px;color:var(--text-hint)">代表者名の列</label><input type="text" id="col-rep" value="代表者名（トーンネーム）" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;" /></div>
+          <div><label style="font-size:11px;color:var(--text-hint)">メールアドレスの列</label><input type="text" id="col-email" value="代表者メールアドレス" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;" /></div>
+          <div><label style="font-size:11px;color:var(--text-hint)">メンバー①の列（②以降は連番で自動認識）</label><input type="text" id="col-member1" value="① トーンネーム" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;" /></div>
+          <div><label style="font-size:11px;color:var(--text-hint)">タイムスタンプの列（任意）</label><input type="text" id="col-timestamp" value="タイムスタンプ" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;" /></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="btn primary" onclick="document.getElementById('import-csv-file').click()">📂 CSVファイルを選択して読み込む</button>
+        <input type="file" id="import-csv-file" accept=".csv" style="display:none" onchange="importCSV(event)" />
+      </div>
+      <div id="csv-import-result" style="display:none;margin-top:10px;padding:10px 14px;border-radius:var(--radius);font-size:13px;"></div>
+    </div>
+    <div class="export-section">
+      <h3>バックアップ・復元</h3>
+      <p>データをJSONとして保存・読み込みできます。別のPCへの移行時などに使用します。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" onclick="exportJSON()">JSONで書き出し</button>
+        <button class="btn" onclick="document.getElementById('import-file').click()">JSONを読み込む</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)" />
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const DEFAULT_CONFIG={title:'OBOGライブ~延長戦~',maxMembers:8,extraFields:[]};
+let config=Object.assign({},DEFAULT_CONFIG,JSON.parse(localStorage.getItem('acappella_v2_config')||'{}'));
+let bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
+function saveData(){try{localStorage.setItem('acappella_v2_bands',JSON.stringify(bands));}catch(e){}}
+function saveConfig(){try{localStorage.setItem('acappella_v2_config',JSON.stringify(config));}catch(e){}}
+
+// localStorageから最新データを読み込んで画面を更新する
+function reloadFromStorage(){
+  bands=JSON.parse(localStorage.getItem('acappella_v2_bands')||'[]');
+  const newConfig=JSON.parse(localStorage.getItem('acappella_v2_config')||'{}');
+  config=Object.assign({},DEFAULT_CONFIG,newConfig);
+  document.getElementById('header-title').textContent=config.title;
+  // 現在アクティブなタブを再描画
+  const activeTab=document.querySelector('.subtab.active');
+  if(activeTab){
+    const id=activeTab.id.replace('subtab-','');
+    if(id==='answers')renderAnswers();
+    else if(id==='lottery')renderLotteryResult();
+    else if(id==='timetable')initTimetable();
+    else if(id==='members')renderMembers();
+    else if(id==='settings')renderSettingsPanel();
+  }
+}
+
+// 別タブ（フォームページ）でlocalStorageが更新されたとき自動反映
+window.addEventListener('storage',function(e){
+  if(e.key==='acappella_v2_bands'||e.key==='acappella_v2_config'){
+    reloadFromStorage();
+    showSyncToast();
+  }
+});
+
+// このタブがフォアグラウンドに戻ったときに最新データを読む
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden){reloadFromStorage();}
+});
+
+// 同期通知トースト
+function showSyncToast(){
+  let t=document.getElementById('sync-toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='sync-toast';
+    t.style.cssText='position:fixed;bottom:24px;right:24px;background:#1a7a4a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent='✓ 新しい申し込みを受信しました';
+  t.style.opacity='1';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.opacity='0',3000);
+}
+
+// ページ読み込み時にダッシュボードを初期化
+window.onload = function() {
+  reloadFromStorage();
+  renderSettingsPanel();
+};
+
+function showSubtab(name,btn){
+  document.querySelectorAll('.subtab').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('subtab-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='answers')renderAnswers();
+  if(name==='lottery')renderLotteryResult();
+  if(name==='timetable')initTimetable();
+  if(name==='members')renderMembers();
+  if(name==='settings')renderSettingsPanel();
+}
+
+// ===== 回答一覧 =====
+function renderAnswers(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const fs=document.getElementById('filt-status').value;
+  const filtered=bands.filter(b=>(!q||b.band.toLowerCase().includes(q)||b.rep.toLowerCase().includes(q))&&(!fs||b.status===fs));
+  document.getElementById('st-total').textContent=bands.length;
+  document.getElementById('st-sel').textContent=bands.filter(b=>b.status==='selected').length;
+  document.getElementById('st-sub').textContent=bands.filter(b=>b.status==='substitute').length;
+  document.getElementById('st-pend').textContent=bands.filter(b=>!b.status||b.status==='pending').length;
+  const wrap=document.getElementById('answers-table');
+  if(!filtered.length){wrap.innerHTML='<p class="empty">該当する申し込みがありません</p>';return;}
+  const sorted=[...filtered].sort((a,b)=>(a.rank||9999)-(b.rank||9999));
+  let html=`<table><thead><tr><th>順位</th><th>バンド名</th><th>出演不可時間</th><th>代表者</th><th>人数</th><th>状態</th><th></th></tr></thead><tbody>`;
+  sorted.forEach(b=>{
+    const badge=b.status==='selected'?'<span class="badge badge-selected">当選</span>':b.status==='substitute'?'<span class="badge badge-substitute">補欠</span>':b.status==='excluded'?'<span class="badge badge-excluded">落選</span>':'<span class="badge badge-pending">未確定</span>';
+    const avail=b.allfree?'<span style="color:var(--success);font-size:12px">全日可</span>':`<span style="font-size:12px;color:var(--text-muted)">${esc(b.unavail||'').substring(0,20)}${(b.unavail||'').length>20?'…':''}</span>`;
+    html+=`<tr><td style="font-size:12px;color:var(--text-hint)">${b.rank?`<span style="font-weight:600">${b.rank}</span>`:'—'}</td><td><span class="detail-link" onclick="showDetail(${b.id})">${esc(b.band)}</span></td><td>${avail}</td><td>${esc(b.rep)}</td><td style="font-size:12px">${b.members.length}人</td><td>${badge}</td><td><button class="del-btn" onclick="deleteBand(${b.id})">×</button></td></tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+function showDetail(id){
+  const b=bands.find(x=>x.id===id);if(!b)return;
+  const unavailStr=b.allfree?'全日出演可':(b.unavail||'記入なし');
+  let extraHtml='';
+  config.extraFields.forEach(f=>{
+    extraHtml+=`<tr><td style="color:var(--text-muted);padding:4px 0;width:140px">${esc(f.label)}</td><td>${b.extra&&b.extra[f.id]?esc(b.extra[f.id]):'—'}</td></tr>`;
+  });
+  document.getElementById('dp-band').textContent=b.band;
+  document.getElementById('dp-body').innerHTML=`<table style="width:100%;font-size:13px;border-collapse:collapse">
+    <tr><td style="color:var(--text-muted);padding:4px 0;width:140px">順位</td><td>${b.rank?b.rank+'位':'未抽選'}</td></tr>
+    <tr><td style="color:var(--text-muted);padding:4px 0">出演できない時間帯</td><td>${esc(unavailStr)}</td></tr>
+    <tr><td style="color:var(--text-muted);padding:4px 0">代表者名</td><td>${esc(b.rep)}</td></tr>
+    <tr><td style="color:var(--text-muted);padding:4px 0">メールアドレス</td><td><a href="mailto:${esc(b.email)}" style="color:var(--accent)">${esc(b.email)}</a></td></tr>
+    <tr><td style="color:var(--text-muted);padding:4px 0">メンバー（${b.members.length}人）</td><td>${b.members.map(esc).join(' ')}</td></tr>
+    ${extraHtml}
+    <tr><td style="color:var(--text-muted);padding:4px 0">申込日時</td><td>${new Date(b.createdAt).toLocaleString('ja-JP')}</td></tr>
+  </table>`;
+  const dp=document.getElementById('detail-panel');
+  dp.style.display='block';
+  dp.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function deleteBand(id){if(!confirm('このバンドのデータを削除しますか？'))return;bands=bands.filter(b=>b.id!==id);saveData();renderAnswers();}
+function clearAll(){if(!confirm('全データを削除します。この操作は取り消せません。'))return;bands=[];saveData();renderAnswers();}
+
+// ===== 抽選 =====
+function runLottery(){
+  if(!bands.length){alert('申し込みデータがありません。');return;}
+  if(bands.some(b=>b.rank)&&!confirm('現在の順位をリセットして再抽選しますか？'))return;
+  const shuffled=[...bands].sort(()=>Math.random()-.5);
+  shuffled.forEach((b,i)=>{const target=bands.find(x=>x.id===b.id);if(target){target.rank=i+1;target.status='pending';}});
+  saveData();renderLotteryResult();
+}
+function resetLottery(){
+  if(!confirm('順位と当落をすべてリセットしますか？'))return;
+  bands.forEach(b=>{delete b.rank;b.status='pending';});
+  saveData();renderLotteryResult();
+}
+function setStatus(id,status){
+  const b=bands.find(x=>x.id===id);if(!b)return;
+  b.status=status;saveData();renderLotteryResult();
+}
+function renderLotteryResult(){
+  const sumBox=document.getElementById('lottery-summary-box');
+  const result=document.getElementById('lottery-result');
+  const ranked=bands.filter(b=>b.rank).sort((a,b)=>a.rank-b.rank);
+  if(!bands.length){sumBox.style.display='none';result.innerHTML='<p style="color:var(--text-hint);font-size:14px;padding:20px 0">申し込みがまだありません。</p>';return;}
+  if(!ranked.length){sumBox.style.display='none';result.innerHTML='<p style="color:var(--text-hint);font-size:14px;padding:20px 0">「ランダムに順位をつける」を実行すると結果が表示されます。</p>';return;}
+  const sel=bands.filter(b=>b.status==='selected').length;
+  const sub=bands.filter(b=>b.status==='substitute').length;
+  const exc=bands.filter(b=>b.status==='excluded').length;
+  sumBox.style.display='block';
+  sumBox.textContent=`全${bands.length}バンド 当選 ${sel} / 補欠 ${sub} / 落選 ${exc} / 未確定 ${bands.length-sel-sub-exc}`;
+  let subCount=0;
+  let html='<div class="result-card">';
+  ranked.forEach(b=>{
+    if(b.status==='substitute')subCount++;
+    const subLabel=b.status==='substitute'?`<span style="font-size:11px;color:var(--warning);margin-left:4px">補欠${subCount}</span>`:'';
+    const avail=b.allfree?'全日可':(b.unavail||'').substring(0,16)+((b.unavail||'').length>16?'…':'');
+    html+=`<div class="result-item">
+      <span class="result-num">${b.rank}</span>
+      <span class="result-name">${esc(b.band)}${subLabel}</span>
+      <span class="result-rep">${esc(b.rep)}</span>
+      <span class="result-avail">${esc(avail)}</span>
+      <div class="status-btns">
+        <button class="st-btn ${b.status==='selected'?'on-selected':''}" onclick="setStatus(${b.id},'selected')">当選</button>
+        <button class="st-btn ${b.status==='substitute'?'on-substitute':''}" onclick="setStatus(${b.id},'substitute')">補欠</button>
+        <button class="st-btn ${b.status==='excluded'?'on-excluded':''}" onclick="setStatus(${b.id},'excluded')">落選</button>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  const unranked=bands.filter(b=>!b.rank);
+  if(unranked.length)html+=`<p style="font-size:12px;color:var(--text-hint);margin-top:12px">※ 順位未割当のバンドが${unranked.length}件あります</p>`;
+  result.innerHTML=html;
+}
+
+// ===== タイムテーブル =====
+let ttOrder=[];
+let dragSrcIdx=null;
+
+function initTimetable(){
+  const selected=bands.filter(b=>b.status==='selected');
+  const selectedIds=selected.map(b=>b.id);
+  ttOrder=ttOrder.filter(id=>selectedIds.includes(id));
+  selectedIds.forEach(id=>{if(!ttOrder.includes(id))ttOrder.push(id);});
+  renderTimetable();
+}
+function resetTimetable(){
+  ttOrder=bands.filter(b=>b.status==='selected').map(b=>b.id);
+  renderTimetable();
+}
+function autoArrange(){
+  const selected=bands.filter(b=>b.status==='selected');
+  if(!selected.length)return;
+  const remaining=[...selected];
+  const arranged=[];
+  arranged.push(remaining.splice(Math.floor(Math.random()*remaining.length),1)[0]);
+  while(remaining.length){
+    const last1=arranged[arranged.length-1];
+    const last2=arranged.length>=2?arranged[arranged.length-2]:null;
+    const prevMembers=new Set([...last1.members,...(last2?last2.members:[])]);
+    let bestIdx=0,bestScore=Infinity;
+    remaining.forEach((b,i)=>{
+      const overlap=b.members.filter(m=>prevMembers.has(m)).length;
+      if(overlap<bestScore){bestScore=overlap;bestIdx=i;}
+    });
+    arranged.push(remaining.splice(bestIdx,1)[0]);
+  }
+  ttOrder=arranged.map(b=>b.id);
+  renderTimetable();
+}
+function getConflicts(order){
+  const conflicts=new Set();
+  for(let i=0;i<order.length-1;i++){
+    const a=bands.find(b=>b.id===order[i]);
+    const b=bands.find(b=>b.id===order[i+1]);
+    if(!a||!b)continue;
+    if(a.members.some(m=>b.members.includes(m))){conflicts.add(i);conflicts.add(i+1);}
+  }
+  return conflicts;
+}
+function getConflictDetails(order){
+  const details=[];
+  for(let i=0;i<order.length-1;i++){
+    const a=bands.find(b=>b.id===order[i]);
+    const b=bands.find(b=>b.id===order[i+1]);
+    if(!a||!b)continue;
+    const overlap=a.members.filter(m=>b.members.includes(m));
+    if(overlap.length)details.push(`${i+1}番目「${a.band}」と${i+2}番目「${b.band}」（${overlap.join('、')}）`);
+  }
+  return details;
+}
+function renderTimetable(){
+  const selected=bands.filter(b=>b.status==='selected');
+  const body=document.getElementById('tt-body');
+  const warnBox=document.getElementById('tt-warning-box');
+  if(!selected.length){body.innerHTML='<p class="tt-empty">当選バンドがまだいません。抽選タブで当選を設定してください。</p>';warnBox.style.display='none';return;}
+  const conflicts=getConflicts(ttOrder);
+  const details=getConflictDetails(ttOrder);
+  if(details.length){warnBox.style.display='block';warnBox.innerHTML=`<strong>⚠ メンバー被りの警告 ${details.length}件</strong><br>${details.map(d=>'・'+d).join('<br>')}`;}
+  else{warnBox.style.display='none';}
+  let html='<div class="tt-card">';
+  ttOrder.forEach((id,i)=>{
+    const b=bands.find(x=>x.id===id);if(!b)return;
+    const isWarn=conflicts.has(i);
+    html+=`<div class="tt-row${isWarn?' warn':''}" draggable="true" data-idx="${i}"
+      ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event)"
+      ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)" ondragleave="onDragLeave(event)">
+      <span class="tt-drag-handle">⠿</span>
+      <span class="tt-num">${i+1}</span>
+      <span class="tt-name">${esc(b.band)}</span>
+      <span class="tt-members">${b.members.map(esc).join(' ')}</span>
+      ${isWarn?'<span class="tt-warn-label">⚠ 被り</span>':''}
+    </div>`;
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+function onDragStart(e,idx){dragSrcIdx=idx;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function onDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over');}
+function onDragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function onDrop(e,idx){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  if(dragSrcIdx===null||dragSrcIdx===idx)return;
+  const moved=ttOrder.splice(dragSrcIdx,1)[0];
+  ttOrder.splice(idx,0,moved);
+  dragSrcIdx=null;renderTimetable();
+}
+function onDragEnd(e){e.currentTarget.classList.remove('dragging');dragSrcIdx=null;}
+
+// ===== メンバー一覧 =====
+function extractYear(name){
+  const m=name.match(/^(\d+)/);
+  return m?parseInt(m[1]):9999;
+}
+
+function buildMemberMap(targetBands){
+  const map=new Map();
+  targetBands.forEach(b=>{
+    b.members.forEach(name=>{
+      const key=name.trim();
+      if(!key)return;
+      if(!map.has(key))map.set(key,{name:key,bands:[]});
+      map.get(key).bands.push({name:b.band,status:b.status});
+    });
+  });
+  return map;
+}
+
+function renderMembers(){
+  const filterMode=document.getElementById('member-filter').value;
+  const q=(document.getElementById('member-search').value||'').toLowerCase();
+  const targetBands=filterMode==='selected'?bands.filter(b=>b.status==='selected'):bands;
+
+  const map=buildMemberMap(targetBands);
+
+  let entries=[...map.values()].filter(m=>!q||m.name.toLowerCase().includes(q));
+
+  const grouped=new Map();
+  entries.forEach(m=>{
+    const yr=extractYear(m.name);
+    const key=yr===9999?'年度不明':`${yr}年度`;
+    if(!grouped.has(key))grouped.set(key,[]);
+    grouped.get(key).push(m);
+  });
+
+  const sortedKeys=[...grouped.keys()].sort((a,b)=>{
+    const na=parseInt(a)||9999,nb=parseInt(b)||9999;
+    return na-nb;
+  });
+
+  const total=map.size;
+  const multi=[...map.values()].filter(m=>m.bands.length>1).length;
+  document.getElementById('ms-unique').textContent=total;
+  document.getElementById('ms-multi').textContent=multi;
+  document.getElementById('ms-bands').textContent=targetBands.length;
+
+  const body=document.getElementById('members-body');
+  if(!entries.length){body.innerHTML='<p class="empty">該当するメンバーがいません</p>';return;}
+
+  let html='';
+  sortedKeys.forEach(yearKey=>{
+    const members=grouped.get(yearKey).sort((a,b)=>{
+      const na=a.name.replace(/^\d+/,'').trim();
+      const nb=b.name.replace(/^\d+/,'').trim();
+      return na.localeCompare(nb,'ja');
+    });
+    html+=`<div class="year-group">
+      <div class="year-heading">${esc(yearKey)} <span style="font-weight:400">${members.length}人</span></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>名前</th><th>出演バンド数</th><th>バンド</th></tr></thead>
+        <tbody>`;
+    members.forEach(m=>{
+      const pills=m.bands.map(b=>`<span class="band-pill ${b.status==='selected'?'selected':''}">${esc(b.name)}</span>`).join('');
+      const multiMark=m.bands.length>1?`<span style="font-size:11px;color:var(--warning);margin-left:4px">×${m.bands.length}</span>`:'';
+      html+=`<tr>
+        <td style="font-weight:500">${esc(m.name)}${multiMark}</td>
+        <td style="font-size:13px;text-align:center">${m.bands.length}</td>
+        <td><div class="band-pills">${pills}</div></td>
+      </tr>`;
+    });
+    html+='</tbody></table></div></div>';
+  });
+  body.innerHTML=html;
+}
+
+// ===== フォーム設定 =====
+function renderSettingsPanel(){
+  document.getElementById('cfg-title').value=config.title;
+  document.getElementById('cfg-maxmembers').value=config.maxMembers;
+  renderExtraFieldList();renderPreview();
+}
+function renderExtraFieldList(){
+  const list=document.getElementById('extra-field-list');
+  if(!config.extraFields.length){list.innerHTML='<p style="font-size:12px;color:var(--text-hint);padding:4px 0">まだ追加の質問項目はありません</p>';return;}
+  list.innerHTML=config.extraFields.map((f,i)=>`
+    <div class="field-item">
+      <span class="fname">${esc(f.label)}</span>
+      <button class="req-toggle ${f.required?'on':'off'}" onclick="toggleRequired(${i})">${f.required?'必須':'任意'}</button>
+      <button class="del-btn" onclick="removeExtraField(${i})">×</button>
+    </div>`).join('');
+}
+function renderPreview(){
+  const maxM=parseInt(document.getElementById('cfg-maxmembers').value)||config.maxMembers;
+  const nums=['③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+  let html=`
+    <div class="preview-field">バンド名 <span style="color:var(--danger);font-size:11px">必須</span></div>
+    <div class="preview-field">出演できない時間帯 / 全日出演可 <span style="color:var(--danger);font-size:11px">必須</span></div>
+    <div class="preview-field">代表者名（トーンネーム） <span style="color:var(--danger);font-size:11px">必須</span></div>
+    <div class="preview-field">代表者メールアドレス <span style="color:var(--danger);font-size:11px">必須</span></div>
+    <div class="preview-field">メンバー①② <span style="color:var(--danger);font-size:11px">必須</span></div>`;
+  if(maxM>2)html+=`<div class="preview-field" style="color:var(--text-hint)">メンバー${nums[0]}〜${nums[maxM-3]||nums[0]} <span style="font-size:11px">任意</span></div>`;
+  config.extraFields.forEach(f=>{
+    html+=`<div class="preview-field">${esc(f.label)} <span style="font-size:11px;color:${f.required?'var(--danger)':'var(--text-hint)'};">${f.required?'必須':'任意'}</span></div>`;
+  });
+  document.getElementById('preview-fields').innerHTML=html;
+}
+function addExtraField(){
+  const inp=document.getElementById('new-field-input');
+  const label=inp.value.trim();if(!label)return;
+  config.extraFields.push({id:'ef_'+Date.now(),label,required:false});
+  inp.value='';renderExtraFieldList();renderPreview();
+}
+function removeExtraField(i){config.extraFields.splice(i,1);renderExtraFieldList();renderPreview();}
+function toggleRequired(i){config.extraFields[i].required=!config.extraFields[i].required;renderExtraFieldList();renderPreview();}
+function saveSettings(){
+  const newTitle=document.getElementById('cfg-title').value.trim()||DEFAULT_CONFIG.title;
+  const newMax=parseInt(document.getElementById('cfg-maxmembers').value)||8;
+  config.title=newTitle;config.maxMembers=newMax;
+  saveConfig();
+  document.getElementById('header-title').textContent=config.title;
+  const saved=document.getElementById('settings-saved');
+  saved.style.display='block';setTimeout(()=>saved.style.display='none',3000);
+}
+
+// ===== データ出力 =====
+function exportCSV(type){
+  let target;
+  if(type==='selected')target=bands.filter(b=>b.status==='selected');
+  else if(type==='ranked')target=[...bands].filter(b=>b.rank).sort((a,b)=>a.rank-b.rank);
+  else target=bands;
+  if(!target.length){alert('データがありません。');return;}
+  const header=['順位','バンド名','出演できない時間帯','全日出演可','代表者名','メールアドレス','メンバー人数',
+    ...Array.from({length:config.maxMembers},(_,i)=>`メンバー${i+1}`),
+    ...config.extraFields.map(f=>f.label),'状態','申込日時'];
+  const sl=s=>s==='selected'?'当選':s==='substitute'?'補欠':s==='excluded'?'落選':'未確定';
+  const rows=target.map(b=>[
+    b.rank||'',b.band,b.allfree?'':(b.unavail||''),b.allfree?'○':'',
+    b.rep,b.email,b.members.length,
+    ...Array.from({length:config.maxMembers},(_,i)=>b.members[i]||''),
+    ...config.extraFields.map(f=>(b.extra&&b.extra[f.id])||''),
+    sl(b.status),new Date(b.createdAt).toLocaleString('ja-JP')
+  ]);
+  const csv='\uFEFF'+[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl(csv,`acappella_${type}_${yyyymmdd()}.csv`,'text/csv;charset=utf-8');
+}
+function exportTimetableCSV(){
+  if(!ttOrder.length){alert('タイムテーブルがまだ作成されていません。');return;}
+  const header=['出演順','バンド名','代表者','メンバー','出演できない時間帯'];
+  const rows=ttOrder.map((id,i)=>{
+    const b=bands.find(x=>x.id===id);if(!b)return null;
+    return[i+1,b.band,b.rep,b.members.join('・'),b.allfree?'全日可':(b.unavail||'')];
+  }).filter(Boolean);
+  const csv='\uFEFF'+[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl(csv,`timetable_${yyyymmdd()}.csv`,'text/csv;charset=utf-8');
+}
+function exportMembersCSV(){
+  const map=buildMemberMap(bands);
+  const entries=[...map.values()].sort((a,b)=>{
+    const ya=extractYear(a.name),yb=extractYear(b.name);
+    return ya!==yb?ya-yb:a.name.localeCompare(b.name,'ja');
+  });
+  if(!entries.length){alert('メンバーデータがありません。');return;}
+  const header=['名前','年度','出演バンド数','バンド一覧'];
+  const rows=entries.map(m=>{
+    const yr=extractYear(m.name);
+    return[m.name,yr===9999?'不明':yr,m.bands.length,m.bands.map(b=>b.name).join('・')];
+  });
+  const csv='\uFEFF'+[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl(csv,`members_${yyyymmdd()}.csv`,'text/csv;charset=utf-8');
+}
+function exportJSON(){dl(JSON.stringify({config,bands},null,2),`acappella_backup_${yyyymmdd()}.json`,'application/json');}
+function importJSON(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!confirm('データを読み込みます。現在のデータは上書きされます。'))return;
+      if(data.bands)bands=data.bands;
+      if(data.config)config=Object.assign({},DEFAULT_CONFIG,data.config);
+      saveData();saveConfig();renderAnswers();renderSettingsPanel();
+      alert('読み込み完了！');
+    }catch{alert('JSONファイルの読み込みに失敗しました。');}
+  };
+  r.readAsText(f);e.target.value='';
+}
+
+// ===== Googleフォーム CSV インポート =====
+function importCSV(e){
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const text=ev.target.result;
+      const rows=parseCSV(text);
+      if(rows.length<2){showCsvResult('error','CSVにデータが見つかりませんでした。');return;}
+      const headers=rows[0];
+      // 列名マッピングを取得
+      const colBand=g('col-band');
+      const colUnavail=g('col-unavail');
+      const colAllfree=g('col-allfree');
+      const colRep=g('col-rep');
+      const colEmail=g('col-email');
+      const colMember1=g('col-member1');
+      const colTs=g('col-timestamp');
+      // 必須列の存在チェック
+      const missing=[];
+      if(!headers.includes(colBand))missing.push(`「${colBand}」`);
+      if(!headers.includes(colRep))missing.push(`「${colRep}」`);
+      if(!headers.includes(colEmail))missing.push(`「${colEmail}」`);
+      if(missing.length){showCsvResult('error',`以下の列が見つかりませんでした：${missing.join('、')}<br>列マッピング設定を確認してください。<br><small style="color:var(--text-hint)">実際の列名: ${headers.slice(0,10).map(h=>`「${h}」`).join(' ')}</small>`);return;}
+      // メンバー列を自動検出（①②③…または連番）
+      const memberCols=[];
+      const nums=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+      headers.forEach((h,i)=>{
+        // colMember1で始まる列 or 丸数字+「トーンネーム」パターン
+        if(h.startsWith(colMember1.replace('①','').trim())||nums.some(n=>h.startsWith(n)&&(h.includes('トーンネーム')||h.includes('メンバー')||h===colMember1.replace('①',n)))){
+          memberCols.push(i);
+        }
+      });
+      // 既存バンドのキー（重複チェック用：バンド名+代表者）
+      const existingKeys=new Set(bands.map(b=>`${b.band}__${b.rep}`));
+      let added=0,skipped=0;
+      for(let r=1;r<rows.length;r++){
+        const row=rows[r];
+        if(row.length<2||row.every(c=>!c.trim()))continue;
+        const get=(col)=>{const i=headers.indexOf(col);return i>=0?(row[i]||'').trim():'';};
+        const bandName=get(colBand);
+        const rep=get(colRep);
+        if(!bandName||!rep){skipped++;continue;}
+        const key=`${bandName}__${rep}`;
+        if(existingKeys.has(key)){skipped++;continue;}
+        const allfreeVal=get(colAllfree).toLowerCase();
+        const allfree=allfreeVal==='はい'||allfreeVal==='yes'||allfreeVal==='true'||allfreeVal==='チェック済み'||allfreeVal==='○';
+        const unavail=get(colUnavail);
+        const email=get(colEmail);
+        const tsRaw=get(colTs);
+        const members=memberCols.map(i=>(row[i]||'').trim()).filter(Boolean);
+        // extraFields
+        const extra={};
+        config.extraFields.forEach(f=>{extra[f.id]=get(f.label);});
+        const createdAt=tsRaw?new Date(tsRaw).toISOString():new Date().toISOString();
+        bands.push({id:Date.now()+r,band:bandName,unavail,allfree,rep,email,members,extra,status:'pending',createdAt});
+        existingKeys.add(key);
+        added++;
+      }
+      saveData();
+      renderAnswers();
+      const msg=`✓ ${added}件を追加しました。${skipped>0?`（${skipped}件はスキップ：重複または必須項目不足）`:''}`;
+      showCsvResult('success',msg);
+      // 回答一覧タブに切り替え
+      if(added>0){document.querySelector('.tab').click();}
+    }catch(err){showCsvResult('error','CSVの解析に失敗しました：'+err.message);}
+  };
+  reader.readAsText(f,'UTF-8');
+  e.target.value='';
+}
+
+function parseCSV(text){
+  // BOM除去
+  if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+  const rows=[];
+  let cur=[],field='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'&&text[i+1]==='"'){field+='"';i++;}
+      else if(c==='"'){inQ=false;}
+      else field+=c;
+    }else{
+      if(c==='"'){inQ=true;}
+      else if(c===','){cur.push(field);field='';}
+      else if(c==='\r'||c==='\n'){
+        cur.push(field);field='';
+        if(cur.some(x=>x))rows.push(cur);
+        cur=[];
+        if(c==='\r'&&text[i+1]==='\n')i++;
+      }else field+=c;
+    }
+  }
+  if(field||cur.length)cur.push(field);
+  if(cur.some(x=>x))rows.push(cur);
+  return rows;
+}
+
+function showCsvResult(type,msg){
+  const el=document.getElementById('csv-import-result');
+  el.style.display='block';
+  if(type==='success'){el.style.background='var(--success-bg)';el.style.color='var(--success)';el.style.border='1px solid #a8dfc0';}
+  else{el.style.background='var(--danger-bg)';el.style.color='var(--danger)';el.style.border='1px solid #f0b8b2';}
+  el.innerHTML=msg;
+}
+function g(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function yyyymmdd(){return new Date().toISOString().slice(0,10).replace(/-/g,'');}
+function dl(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
+</script>
+</body>
+</html>
